@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+<header th:fragment="header" class="sticky-top bg-white shadow-sm border-bottom">
+    <div class="container py-2">
+        <div class="row align-items-center">
+            <!-- Logo mang phong cách Wujia Style -->
+            <div class="col-6 col-lg-3 d-flex align-items-center">
+                <a th:href="@{/}" class="text-decoration-none d-flex align-items-center">
+                    <div class="text-center me-2">
+                        <div class="fw-bold text-uppercase" style="color: #004ea2; font-family: 'Cinzel', serif; letter-spacing: 2px; font-size: 1.4rem;">
+                            <i class="bi bi-cup-hot-fill text-danger me-1"></i>UTETra
+                        </div>
+                        <small class="text-secondary fw-semibold" style="font-size: 0.65rem; display: block; letter-spacing: 1px;">TRÀ TRUYỀN THỐNG ĐÀI LOAN</small>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Menu trung tâm -->
+            <div class="col-12 col-lg-6 my-2 my-lg-0 order-3 order-lg-2">
+                <form th:action="@{/}" method="get" class="d-flex">
+                    <div class="input-group">
+                        <input type="text" name="keyword" th:value="${keyword}" class="form-control border-2 border-primary-subtle rounded-start-pill ps-3" placeholder="Tìm kiếm vị trà, topping, quán gần bạn...">
+                        <button class="btn btn-primary rounded-end-pill px-4" style="background-color: #004ea2; border-color: #004ea2;" type="submit">
+                            <i class="bi bi-search"></i> Tìm
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Cụm hành động / Tài khoản / Giỏ hàng -->
+            <div class="col-6 col-lg-3 text-end order-2 order-lg-3 d-flex justify-content-end align-items-center gap-2">
+                <!-- Giỏ hàng -->
+                <a th:href="@{/cart}" class="btn btn-light position-relative rounded-circle p-2 me-2 border shadow-sm">
+                    <i class="bi bi-cart3 fs-5" style="color: #004ea2;"></i>
+                    <span th:if="${cartItemCount != null and cartItemCount > 0}" 
+                          class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                          th:text="${cartItemCount}">
+                        0
+                    </span>
+                </a>
+
+                <!-- Chưa đăng nhập -->
+                <div sec:authorize="!isAuthenticated()" class="d-flex gap-2">
+                    <a th:href="@{/login}" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold" style="border-color: #004ea2; color: #004ea2;">Đăng nhập</a>
+                    <a th:href="@{/register}" class="btn btn-danger btn-sm rounded-pill px-3 fw-bold" style="background-color: #d8232a;">Đăng ký</a>
+                </div>
+
+                <!-- Đã đăng nhập -->
+                <div sec:authorize="isAuthenticated()" class="dropdown">
+                    <button class="btn btn-sm btn-outline-primary dropdown-toggle rounded-pill px-3 fw-bold" style="border-color: #004ea2; color: #004ea2;" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-fill me-1"></i><span sec:authentication="name">Tài khoản</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                        <li><a class="dropdown-item py-2" th:href="@{/profile}"><i class="bi bi-person me-2"></i>Hồ sơ cá nhân</a></li>
+                        <li><a class="dropdown-item py-2" th:href="@{/orders}"><i class="bi bi-receipt me-2"></i>Đơn mua hàng</a></li>
+                        <li sec:authorize="hasRole('VENDOR')">
+                            <hr class="dropdown-divider">
+                            <a class="dropdown-item py-2 text-primary fw-bold" th:href="@{/vendor/dashboard}"><i class="bi bi-shop me-2"></i>Kênh Quán Shop</a>
+                        </li>
+                        <li sec:authorize="hasRole('ADMIN')">
+                            <hr class="dropdown-divider">
+                            <a class="dropdown-item py-2 text-danger fw-bold" th:href="@{/admin/dashboard}"><i class="bi bi-speedometer2 me-2"></i>Kênh Admin Quản Trị</a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form th:action="@{/logout}" method="post" class="m-0">
+                                <button type="submit" class="dropdown-item py-2 text-danger"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thanh Menu phụ -->
+    <nav class="navbar navbar-expand bg-light py-1 border-top" style="font-size: 0.9rem;">
+        <div class="container justify-content-center">
+            <ul class="navbar-nav gap-4 text-uppercase fw-bold">
+                <li class="nav-item"><a class="nav-link active" th:href="@{/}" style="color: #004ea2;">Trang Chủ</a></li>
+                <li class="nav-item"><a class="nav-link text-dark" th:href="@{/#productList}">Sản Phẩm Nổi Bật</a></li>
+                <li class="nav-item"><a class="nav-link text-dark" th:href="@{/#shopsList}">Hệ Thống Gian Hàng</a></li>
+                <li class="nav-item"><a class="nav-link text-dark" th:href="@{/#storySection}">Câu Chuyện UTETra</a></li>
+                <li class="nav-item"><a class="nav-link text-danger" th:href="@{/register}">Hợp Tác Mở Quán</a></li>
+            </ul>
+        </div>
+    </nav>
+</header>
+</body>
+</html>

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTETra - Vị Trà Truyền Thống Đài Loan</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* 1. NỀN TRANH RỒNG MỚI - NÉT VẼ ĐẬM RÕ, CUỘN THEO TRANG */
+        body {
+            font-family: 'Montserrat', sans-serif;
+            color: #333;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #0d2847;
+            /* Đã chuyển sang trỏ đúng file wave-bg.png */
+            background-image: url('/images/wave-bg.png');
+            background-repeat: repeat-y;
+            background-position: center top;
+            /* Kích thước 100% giúp rồng chiếm trọn chiều ngang màn hình sắc nét */
+            background-size: 100% auto;
+            /* Cuộn tự nhiên cùng chuột để thấy toàn bộ rồng khi lướt xuống */
+            background-attachment: scroll; 
+        }
+
+        /* 2. Cụm mạng xã hội nổi bên phải */
+        .wujia-floating-bar {
+            position: fixed;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1050;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .wujia-floating-bar a {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background-color: #004ea2;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            text-decoration: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        .wujia-floating-bar a:hover {
+            transform: scale(1.15);
+            background-color: #d8232a;
+        }
+
+        /* 3. Hero Banner */
+        .wujia-hero {
+            background: linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(247,239,231,0.97) 100%);
+            border-radius: 20px;
+            padding: 3rem 2.5rem;
+            border: 2px solid #ecd9c6;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+        }
+        .hero-title {
+            font-family: 'Playfair Display', serif;
+            color: #d8232a;
+            font-size: 2.8rem;
+            font-weight: 800;
+            line-height: 1.2;
+            text-transform: uppercase;
+        }
+
+        /* 4. Tiêu đề mục */
+        .section-header-title {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 2.2rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-align: center;
+            color: #ffffff;
+            margin-bottom: 2rem;
+            position: relative;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+        }
+        .section-header-title::after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 4px;
+            background: #d8232a;
+            margin: 12px auto 0;
+            border-radius: 2px;
+        }
+
+        /* 5. Thẻ sản phẩm */
+        .wujia-card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: none;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .wujia-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 14px 28px rgba(0,0,0,0.5);
+        }
+        .wujia-img-wrap {
+            position: relative;
+            width: 100%;
+            padding-top: 100%;
+            background: #fbf9f6;
+            overflow: hidden;
+        }
+        .wujia-img-wrap img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+        .wujia-card:hover .wujia-img-wrap img {
+            transform: scale(1.06);
+        }
+        .wujia-card-footer-btn {
+            background-color: #004ea2;
+            color: white;
+            font-weight: 600;
+            border-radius: 30px;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            border: none;
+            transition: 0.2s;
+        }
+        .wujia-card-footer-btn:hover {
+            background-color: #d8232a;
+            color: white;
+        }
+
+        /* Khung hiển thị Danh mục và Câu chuyện */
+        .glass-box {
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Cụm mạng xã hội nổi bên phải -->
+    <div class="wujia-floating-bar d-none d-md-flex">
+        <a href="tel:19001234" title="Hotline"><i class="bi bi-telephone-fill"></i></a>
+        <a href="#" title="Zalo"><i class="bi bi-chat-dots-fill"></i></a>
+        <a href="#" title="Facebook"><i class="bi bi-facebook"></i></a>
+        <a href="#" title="Youtube"><i class="bi bi-youtube"></i></a>
+        <a href="#" title="Tiktok"><i class="bi bi-tiktok"></i></a>
+    </div>
+
+    <!-- Header Fragment -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container my-5">
+        
+        <!-- 1. Hero Banner Giới thiệu -->
+        <section class="wujia-hero mb-5">
+            <div class="row align-items-center">
+                <div class="col-lg-7 text-center text-lg-start">
+                    <span class="badge bg-danger rounded-pill px-3 py-2 fw-bold mb-3 text-uppercase">Hương Vị Mới - Bừng Hứng Khởi</span>
+                    <h1 class="hero-title mb-3">Lần Đầu Có Mặt Tại UTETra</h1>
+                    <p class="fs-5 text-secondary mb-4">Ủ trà chuẩn vị truyền thống, kết hợp sữa tươi thanh trùng và trân châu thủ công dẻo dai nguyên bản.</p>
+                    <div class="d-flex gap-3 justify-content-center justify-content-lg-start">
+                        <a href="#productList" class="btn btn-danger btn-lg rounded-pill px-4 fw-bold shadow" style="background-color: #d8232a;">Khám Phá Menu</a>
+                        <a href="#storySection" class="btn btn-outline-primary btn-lg rounded-pill px-4 fw-bold" style="border-color: #004ea2; color: #004ea2;">Văn Hóa Trà</a>
+                    </div>
+                </div>
+                <div class="col-lg-5 text-center mt-4 mt-lg-0">
+                    <img src="https://images.unsplash.com/photo-1558857563-b37cf5ef7b98?w=600" class="img-fluid rounded-4 shadow-lg border border-3 border-white" style="max-height: 340px; object-fit: cover;" alt="Trà sữa UTETra">
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Danh Mục & Câu Chuyện Thương Hiệu -->
+        <section id="storySection" class="mb-5">
+            <div class="row g-4 align-items-center">
+                <div class="col-md-6">
+                    <div class="glass-box p-4 border-start border-4 border-primary">
+                        <h4 class="fw-bold mb-3" style="color: #004ea2;">CÂU CHUYỆN THƯƠNG HIỆU</h4>
+                        <p class="text-secondary leading-relaxed mb-2">
+                            Khởi nguồn từ nét văn hóa trà truyền thống, <strong>UTETra</strong> kết nối các thương hiệu trà danh tiếng để mang tới cho bạn những ly trà thơm ngậy nhưng vẫn thanh khiết và tươi mới mỗi ngày.
+                        </p>
+                        <p class="text-secondary leading-relaxed mb-0">
+                            Các quán đối tác đều dùng lá trà nguyên bản ủ đúng chuẩn độ, cam kết chất lượng sạch và vị ngọt thanh mát tự nhiên.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="row g-3">
+                        <div class="col-6 col-md-4" th:each="cat : ${categories}">
+                            <div class="glass-box p-3 text-center h-100">
+                                <img th:src="${cat.imageUrl}" class="rounded-circle mb-2 border border-2 border-primary" style="width: 60px; height: 60px; object-fit: cover;" alt="">
+                                <h6 class="fw-bold mb-0 text-dark small" th:text="${cat.name}">Danh mục</h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. DANH SÁCH CÁC MÓN SẢN PHẨM NỔI BẬT -->
+        <section id="productList" class="mb-5">
+            <h2 class="section-header-title">CÁC DÒNG SẢN PHẨM NỔI BẬT</h2>
+
+            <!-- Khi chưa có dữ liệu -->
+            <div th:if="${productPage == null or productPage.totalElements == 0}" class="text-center py-5 glass-box">
+                <i class="bi bi-cup-straw fs-1 text-secondary"></i>
+                <p class="mt-2 text-secondary fw-semibold">Hiện chưa có sản phẩm nào phù hợp!</p>
+            </div>
+
+            <!-- Lưới hiển thị các món trà sữa (Grid 4 cột) -->
+            <div class="row g-4" th:if="${productPage != null and productPage.totalElements > 0}">
+                <div class="col-6 col-md-4 col-lg-3" th:each="product : ${productPage.content}">
+                    <div class="wujia-card h-100 d-flex flex-column">
+                        <div class="wujia-img-wrap">
+                            <img th:src="${product.imageUrl}" alt="Trà sữa">
+                        </div>
+                        <div class="p-3 d-flex flex-column flex-grow-1">
+                            <small class="text-muted text-truncate mb-1">
+                                <i class="bi bi-shop me-1 text-primary"></i>[[${product.shop.shopName}]]
+                            </small>
+                            <h6 class="fw-bold mb-2 text-truncate" th:text="${product.name}" style="color: #004ea2;">Tên Món Trà</h6>
+                            
+                            <div class="d-flex justify-content-between align-items-center mt-auto mb-3">
+                                <span class="fw-bold fs-5 text-danger" th:text="${#numbers.formatDecimal(product.basePrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">30.000 đ</span>
+                                <small class="text-secondary">Đã bán [[${product.soldCount}]]</small>
+                            </div>
+
+                            <a th:href="@{'/products/' + ${product.id}}" class="btn wujia-card-footer-btn text-center text-decoration-none">
+                                <i class="bi bi-cart-plus me-1"></i> Đặt Món
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phân trang -->
+            <div class="d-flex justify-content-center mt-5" th:if="${totalPages > 1}">
+                <nav>
+                    <ul class="pagination shadow">
+                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                            <a class="page-link" th:href="@{/(page=${currentPage - 1}, keyword=${keyword})}">Trước</a>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${currentPage == i} ? 'active'">
+                            <a class="page-link" th:href="@{/(page=${i}, keyword=${keyword})}" th:text="${i + 1}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                            <a class="page-link" th:href="@{/(page=${currentPage + 1}, keyword=${keyword})}">Sau</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </section>
+
+        <!-- 4. Top Quán Uy Tín -->
+        <section id="shopsList" class="mb-5" th:if="${not #lists.isEmpty(shops)}">
+            <h4 class="fw-bold text-center mb-4 text-uppercase text-white">Gian Hàng Đối Tác Hàng Đầu</h4>
+            <div class="row g-4 justify-content-center">
+                <div class="col-12 col-md-6" th:each="shop : ${shops}">
+                    <div class="glass-box p-3">
+                        <div class="d-flex align-items-center">
+                            <img th:src="${shop.logoUrl}" class="rounded-circle me-3 border border-2 border-primary" style="width: 65px; height: 65px; object-fit: cover;" alt="">
+                            <div>
+                                <h6 class="fw-bold mb-1" style="color: #004ea2;" th:text="${shop.shopName}">Tên Quán</h6>
+                                <p class="text-secondary small mb-1" th:text="${shop.description}">Mô tả quán</p>
+                                <span class="badge bg-danger"><i class="bi bi-star-fill me-1"></i>[[${shop.rating}]]</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Footer Fragment -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
