@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Carrier {
 
     @Id
@@ -30,9 +31,11 @@ public class Carrier {
     private BigDecimal baseFee;
 
     @Column(name = "is_active")
+    @Builder.Default
     private Boolean isActive = true;
 
     @Column(name = "created_at")
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
     public Carrier(String name, BigDecimal baseFee, Boolean isActive) {
