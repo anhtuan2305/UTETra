@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Chi Tiết Đơn Hàng #' + ${order.id} + ' - UTETra'">Chi Tiết Đơn Hàng</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            color: #333;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #0d2847;
+            background-image: url('/images/wave-bg.png');
+            background-repeat: repeat-y;
+            background-position: center top;
+            background-size: 100% auto;
+            background-attachment: scroll;
+        }
+
+        .detail-box {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+            padding: 2.5rem;
+        }
+
+        .summary-card {
+            background-color: #f8faff;
+            border: 1px solid #d0e2ff;
+            border-radius: 14px;
+            padding: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container my-5">
+        <div class="detail-box">
+            
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom flex-wrap gap-2">
+                <div>
+                    <a th:href="@{/orders}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 me-2">
+                        <i class="bi bi-arrow-left me-1"></i> Quay lại
+                    </a>
+                    <span class="fs-4 fw-bold" style="color: #004ea2;">ĐƠN HÀNG #[[${order.id}]]</span>
+                </div>
+                <div class="text-muted small">
+                    Ngày đặt: <strong th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></strong>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <!-- Thông tin người nhận -->
+                <div class="col-12 col-md-6">
+                    <div class="summary-card h-100">
+                        <h6 class="fw-bold mb-3" style="color: #004ea2;"><i class="bi bi-geo-alt me-2"></i>Địa Chỉ Nhận Hàng</h6>
+                        <p class="mb-1 fw-semibold" th:text="${order.address.receiverName}"></p>
+                        <p class="mb-1 text-muted small"><i class="bi bi-telephone me-1"></i>[[${order.address.phone}]]</p>
+                        <p class="mb-0 text-muted small"><i class="bi bi-signpost-2 me-1"></i>[[${order.address.streetAddress}]], [[${order.address.city}]]</p>
+                    </div>
+                </div>
+
+                <!-- Phương thức thanh toán -->
+                <div class="col-12 col-md-6">
+                    <div class="summary-card h-100">
+                        <h6 class="fw-bold mb-3" style="color: #004ea2;"><i class="bi bi-credit-card me-2"></i>Thanh Toán & Vận Chuyển</h6>
+                        <p class="mb-1 small">Hình thức: <strong>[[${order.paymentMethod}]]</strong></p>
+                        <p class="mb-1 small">Trạng thái: 
+                            <span th:if="${order.paymentStatus == 'PAID'}" class="badge bg-success">Đã thanh toán</span>
+                            <span th:if="${order.paymentStatus == 'UNPAID'}" class="badge bg-secondary">Chưa thanh toán</span>
+                        </p>
+                        <p class="mb-0 small">Cửa hàng: <strong>[[${order.shop.shopName}]]</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bảng danh sách các món trong đơn hàng (Dữ liệu Snapshot) -->
+            <h5 class="fw-bold mb-3" style="color: #004ea2;">Danh Sách Món Đã Đặt</h5>
+            <div class="table-responsive mb-4">
+                <table class="table align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Món</th>
+                            <th class="text-center">Số Lượng</th>
+                            <th class="text-end">Đơn Giá Lúc Mua</th>
+                            <th class="text-end">Thành Tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="detail : ${order.orderDetails}">
+                            <td>
+                                <div class="fw-bold" style="color: #004ea2;" th:text="${detail.productName}">Tên Món</div>
+                                <div class="text-muted small">
+                                    <i class="bi bi-sliders me-1"></i>[[${detail.optionsSnapshot}]]
+                                </div>
+                            </td>
+                            <td class="text-center fw-semibold" th:text="${detail.quantity}">1</td>
+                            <td class="text-end" th:text="${#numbers.formatDecimal(detail.unitPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+                            <td class="text-end fw-bold text-danger" 
+                                th:text="${#numbers.formatDecimal(detail.unitPrice * detail.quantity, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Tổng kết tiền -->
+            <div class="row justify-content-end">
+                <div class="col-12 col-md-5">
+                    <div class="d-flex justify-content-between mb-2 small">
+                        <span class="text-secondary">Tiền hàng:</span>
+                        <span class="fw-semibold" th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2 small">
+                        <span class="text-secondary">Phí giao hàng:</span>
+                        <span class="fw-semibold" th:text="${#numbers.formatDecimal(order.shippingFee, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-baseline">
+                        <span class="fw-bold">Tổng thanh toán:</span>
+                        <span class="fw-bold fs-4 text-danger" th:text="${#numbers.formatDecimal(order.finalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
