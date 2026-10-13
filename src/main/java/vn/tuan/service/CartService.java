@@ -12,6 +12,7 @@ import vn.tuan.repository.CartItemRepository;
 import vn.tuan.repository.CartRepository;
 import vn.tuan.repository.ProductRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -29,39 +30,69 @@ public class CartService {
     @Autowired
     private ProductRepository productRepository;
 
-    // Lấy giỏ hàng theo email tài khoản, nếu chưa có thì tạo mới
-    public Cart getOrCreateCart(String email) {
-        Account account = accountRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản: " + email));
+    // 1. Lấy hoặc tạo mới giỏ hàng (Hỗ trợ cả Guest và Tài khoản thành viên)
+    @Transactional
+    public Cart getOrCreateCart(String identifier) {
+        if (identifier == null || identifier.isBlank()) {
+            return null;
+        }
+
+        // Trường hợp khách vãng lai (Guest) qua Session ID
+        if (identifier.startsWith("GUEST_")) {
+            return cartRepository.findBySessionId(identifier).orElseGet(() -> {
+                Cart newCart = Cart.builder()
+                        .sessionId(identifier)
+                        .account(null)
+                        .items(new ArrayList<>())
+                        .build();
+                return cartRepository.save(newCart);
+            });
+        }
+
+        // Trường hợp người dùng đã đăng nhập (Email)
+        Account account = accountRepository.findByEmail(identifier)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản: " + identifier));
 
         return cartRepository.findByAccount(account).orElseGet(() -> {
             Cart newCart = Cart.builder()
                     .account(account)
+                    .sessionId(null)
+                    .items(new ArrayList<>())
                     .build();
             return cartRepository.save(newCart);
         });
     }
 
-    // Đếm tổng số lượng món trong giỏ hàng để hiển thị lên Header Badge
-    public int countItemsInCart(String email) {
-        if (email == null) return 0;
+    // 2. Đếm tổng số lượng món trong giỏ để hiển thị lên Header Badge
+    @Transactional(readOnly = true)
+    public int countItemsInCart(String identifier) {
+        if (identifier == null || identifier.isBlank()) {
+            return 0;
+        }
         try {
-            Cart cart = getOrCreateCart(email);
+            Cart cart = getOrCreateCart(identifier);
+            if (cart == null || cart.getItems() == null || cart.getItems().isEmpty()) {
+                return 0;
+            }
             return cart.getItems().stream().mapToInt(CartItem::getQuantity).sum();
         } catch (Exception e) {
             return 0;
         }
     }
 
-    // Thêm món trà sữa kèm các tùy chọn (Size, Đường, Đá, Topping) vào giỏ
+    // 3. Thêm món trà sữa kèm các tùy chọn (Size, Đường, Đá, Topping) vào giỏ
     @Transactional
-    public void addToCart(String email, Integer productId, Integer quantity, 
+    public void addToCart(String identifier, Integer productId, Integer quantity, 
                           String size, String sugar, String ice, List<String> toppings) {
-        Cart cart = getOrCreateCart(email);
+        Cart cart = getOrCreateCart(identifier);
+        if (cart == null) {
+            throw new RuntimeException("Không thể khởi tạo giỏ hàng cho phiên làm việc hiện tại!");
+        }
+
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy món có ID: " + productId));
 
-        // Gom toàn bộ tùy chọn thành chuỗi Text mô tả rõ ràng
+        // Chuẩn hóa chuỗi snapshot tùy chọn món
         StringBuilder optionsBuilder = new StringBuilder();
         optionsBuilder.append(size != null ? size : "Size M").append(" | ");
         optionsBuilder.append(sugar != null ? sugar : "100% Đường").append(" | ");
@@ -73,7 +104,11 @@ public class CartService {
 
         String optionsString = optionsBuilder.toString();
 
-        // Kiểm tra xem món đó với đúng tập tùy chọn đó đã tồn tại trong giỏ chưa
+        if (cart.getItems() == null) {
+            cart.setItems(new ArrayList<>());
+        }
+
+        // Kiểm tra xem món đó với đúng tập tùy chọn đã có trong giỏ chưa
         CartItem existingItem = null;
         for (CartItem item : cart.getItems()) {
             if (item.getProduct().getId().equals(productId) && optionsString.equals(item.getOptionsJson())) {
@@ -97,7 +132,7 @@ public class CartService {
         }
     }
 
-    // Cập nhật số lượng (+1 hoặc -1)
+    // 4. Cập nhật số lượng (+1 hoặc -1)
     @Transactional
     public void updateQuantity(Integer itemId, int delta) {
         CartItem item = cartItemRepository.findById(itemId).orElse(null);
@@ -112,7 +147,7 @@ public class CartService {
         }
     }
 
-    // Xóa một món ra khỏi giỏ
+    // 5. Xóa hẳn một món ra khỏi giỏ
     @Transactional
     public void removeItem(Integer itemId) {
         cartItemRepository.deleteById(itemId);

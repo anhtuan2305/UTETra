@@ -1,6 +1,7 @@
 package vn.tuan.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,9 +24,12 @@ public class CustomUserDetailsService implements UserDetailsService {
         Account account = accountRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản với email: " + email));
 
-        // Nếu tài khoản chưa kích hoạt OTP thì không cho đăng nhập
+        // Kiểm tra trạng thái kích hoạt tài khoản
         if (!Boolean.TRUE.equals(account.getIsActive())) {
-            throw new RuntimeException("Tài khoản chưa được kích hoạt qua mã OTP!");
+            if ("SHIPPER".equalsIgnoreCase(account.getRole())) {
+                throw new DisabledException("Tài khoản Shipper của bạn đang chờ Quản trị viên (Admin) phê duyệt!");
+            }
+            throw new DisabledException("Tài khoản chưa được kích hoạt qua mã OTP!");
         }
 
         return new User(

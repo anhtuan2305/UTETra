@@ -18,10 +18,14 @@ public class Cart {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    // Mỗi User có đúng 1 giỏ hàng
+    // Cho phép null đối với khách vãng lai
     @OneToOne
-    @JoinColumn(name = "account_id", unique = true, nullable = false)
+    @JoinColumn(name = "account_id", nullable = true)
     private Account account;
+
+    // Định danh phiên làm việc cho khách chưa đăng nhập
+    @Column(name = "session_id", length = 100)
+    private String sessionId;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

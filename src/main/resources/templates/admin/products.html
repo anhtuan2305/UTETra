@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Trị Sản Phẩm - UTETra Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-blue: #004ea2;
+            --brand-red: #d8232a;
+        }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f1f5f9;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .admin-box {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            padding: 2rem;
+        }
+        .product-img {
+            width: 48px;
+            height: 48px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body>
+
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container my-4">
+        <div class="admin-box">
+            
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom flex-wrap gap-2">
+                <div>
+                    <a th:href="@{/admin/dashboard}" class="text-decoration-none small text-muted">
+                        <i class="bi bi-arrow-left"></i> Quay lại Dashboard Admin
+                    </a>
+                    <h4 class="fw-bold mb-0 mt-1" style="color: #004ea2;">
+                        <i class="bi bi-cup-hot me-2" style="color: #d8232a;"></i>Quản Trị Sản Phẩm Toàn Sàn
+                    </h4>
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-primary rounded-pill px-3 py-2 fw-bold" style="background-color: #004ea2; border: none;" onclick="openAddModal()">
+                        <i class="bi bi-plus-circle me-1"></i> Thêm Món Mới
+                    </button>
+                </div>
+            </div>
+
+            <!-- Flash message -->
+            <div th:if="${message}" class="alert alert-success py-2 small" th:text="${message}"></div>
+            <div th:if="${errorMessage}" class="alert alert-danger py-2 small" th:text="${errorMessage}"></div>
+
+            <!-- Bảng danh sách sản phẩm -->
+            <div class="border rounded-3 p-3 bg-white">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr class="small text-muted">
+                                <th>Ảnh</th>
+                                <th>Tên Món</th>
+                                <th>Cửa Hàng</th>
+                                <th>Đơn Giá</th>
+                                <th>Trạng Thái</th>
+                                <th class="text-end">Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${#lists.isEmpty(products)}">
+                                <td colspan="6" class="text-center text-muted py-4">Chưa có sản phẩm nào trên hệ thống.</td>
+                            </tr>
+                            <tr th:each="p : ${products}">
+                                <td>
+                                    <!-- Chống loop onerror: this.onerror=null -->
+                                    <img th:src="${p.imageUrl != null and !p.imageUrl.isEmpty() ? p.imageUrl : 'https://placehold.co/100x100?text=Tea'}" 
+                                         onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Tea';"
+                                         class="product-img" alt="Ảnh">
+                                </td>
+                                <td class="fw-bold text-dark" th:text="${p.name}">Trà Sữa Trân Châu</td>
+                                <td>
+                                    <span class="badge bg-light text-primary border" th:text="${p.shop != null ? p.shop.shopName : 'Chưa gán'}">Tên Quán</span>
+                                </td>
+                                <td class="fw-bold" style="color: #d8232a;" th:text="${#numbers.formatDecimal(p.basePrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">35,000 đ</td>
+                                <td>
+                                    <span th:if="${p.status == 'ACTIVE'}" class="badge bg-success-subtle text-success border border-success">Đang Bán</span>
+                                    <span th:unless="${p.status == 'ACTIVE'}" class="badge bg-danger-subtle text-danger border border-danger">Ngừng Bán</span>
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-primary rounded-pill px-2 me-1"
+                                            th:data-id="${p.id}"
+                                            th:data-name="${p.name}"
+                                            th:data-price="${p.basePrice}"
+                                            th:data-desc="${p.description}"
+                                            th:data-img="${p.imageUrl}"
+                                            th:data-shopid="${p.shop != null ? p.shop.id : ''}"
+                                            th:data-status="${p.status}"
+                                            onclick="openEditModal(this)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <form th:action="@{/admin/products/delete}" method="post" class="d-inline"
+                                          onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?');">
+                                        <input type="hidden" name="productId" th:value="${p.id}">
+                                        <button class="btn btn-sm btn-outline-danger rounded-pill px-2">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal Admin Chỉnh Sửa / Thêm Sản Phẩm -->
+    <div class="modal fade" id="adminProductModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <form th:action="@{/admin/products/save}" method="post" enctype="multipart/form-data">
+                    <div class="modal-header border-bottom">
+                        <h5 class="modal-title fw-bold" style="color: #004ea2;" id="modalTitle">Chỉnh Sửa Sản Phẩm</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <input type="hidden" name="id" id="prodId">
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Tên Món *</label>
+                            <input type="text" name="name" id="prodName" class="form-control" required placeholder="Nhập tên món...">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Cửa Hàng Sở Hữu</label>
+                            <select name="shopId" id="prodShop" class="form-select">
+                                <option value="">-- Chọn quán thuộc sở hữu --</option>
+                                <option th:each="s : ${shops}" th:value="${s.id}" th:text="${s.shopName}">Quán</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Đơn Giá (VNĐ) *</label>
+                            <input type="number" step="1000" name="basePrice" id="prodPrice" class="form-control" required placeholder="Ví dụ: 30000">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Chọn Ảnh Từ Thiết Bị</label>
+                            <input type="file" name="imageFile" id="prodFile" class="form-control" accept="image/*" onchange="previewImg(this)">
+                            <div class="mt-2 text-center" id="prevBox" style="display: none;">
+                                <img id="previewImgEl" src="" class="rounded border shadow-sm" style="max-height: 100px; object-fit: contain;">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Mô Tả</label>
+                            <textarea name="description" id="prodDesc" class="form-control" rows="2" placeholder="Mô tả món..."></textarea>
+                        </div>
+
+                        <!-- Trạng thái -->
+                        <input type="hidden" name="status" id="statusHidden" value="ACTIVE">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="statusSwitch" checked onchange="handleSwitch(this.checked)">
+                            <label class="form-check-label small fw-bold text-success" for="statusSwitch" id="switchLabel">Còn món (Đang mở bán)</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold" style="background-color: #004ea2; border: none;">Lưu Thay Đổi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function handleSwitch(isChecked) {
+            const hidden = document.getElementById('statusHidden');
+            const label = document.getElementById('switchLabel');
+            if (isChecked) {
+                hidden.value = 'ACTIVE';
+                label.textContent = 'Còn món (Đang mở bán)';
+                label.className = 'form-check-label small fw-bold text-success';
+            } else {
+                hidden.value = 'INACTIVE';
+                label.textContent = 'Hết món (Ngừng bán)';
+                label.className = 'form-check-label small fw-bold text-danger';
+            }
+        }
+
+        function previewImg(input) {
+            const box = document.getElementById('prevBox');
+            const img = document.getElementById('previewImgEl');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                    box.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = 'Thêm Sản Phẩm Mới';
+            document.getElementById('prodId').value = '';
+            document.getElementById('prodName').value = '';
+            document.getElementById('prodShop').value = '';
+            document.getElementById('prodPrice').value = '';
+            document.getElementById('prodDesc').value = '';
+            document.getElementById('prodFile').value = '';
+            document.getElementById('prevBox').style.display = 'none';
+            document.getElementById('statusSwitch').checked = true;
+            handleSwitch(true);
+            new bootstrap.Modal(document.getElementById('adminProductModal')).show();
+        }
+
+        function openEditModal(btn) {
+            document.getElementById('modalTitle').textContent = 'Chỉnh Sửa Sản Phẩm';
+            document.getElementById('prodId').value = btn.getAttribute('data-id');
+            document.getElementById('prodName').value = btn.getAttribute('data-name');
+            document.getElementById('prodShop').value = btn.getAttribute('data-shopid') || '';
+            document.getElementById('prodPrice').value = btn.getAttribute('data-price');
+            document.getElementById('prodDesc').value = btn.getAttribute('data-desc') || '';
+            document.getElementById('prodFile').value = '';
+
+            const img = btn.getAttribute('data-img');
+            const box = document.getElementById('prevBox');
+            const prevImgEl = document.getElementById('previewImgEl');
+            if (img && img.trim() !== '') {
+                prevImgEl.src = img;
+                box.style.display = 'block';
+            } else {
+                box.style.display = 'none';
+            }
+
+            const isActive = btn.getAttribute('data-status') === 'ACTIVE';
+            document.getElementById('statusSwitch').checked = isActive;
+            handleSwitch(isActive);
+
+            new bootstrap.Modal(document.getElementById('adminProductModal')).show();
+        }
+    </script>
+</body>
+</html>

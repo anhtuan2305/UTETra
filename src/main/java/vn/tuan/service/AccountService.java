@@ -64,7 +64,7 @@ public class AccountService {
         return "SUCCESS";
     }
 
-    // 2. Kích hoạt tài khoản bằng mã OTP
+    // 2. Kích hoạt tài khoản bằng mã OTP (SHIPPER giữ isActive = false để Admin duyệt)
     @Transactional
     public boolean verifyOtp(String email, String otp) {
         var optionalAccount = accountRepository.findByEmail(email);
@@ -73,9 +73,20 @@ public class AccountService {
         Account account = optionalAccount.get();
         if (account.getOtpCode() != null && account.getOtpCode().equals(otp) 
                 && account.getOtpExpiry().isAfter(LocalDateTime.now())) {
-            account.setIsActive(true);
+            
+            // Xóa mã OTP sau khi xác minh đúng
             account.setOtpCode(null);
             account.setOtpExpiry(null);
+
+            // Phân luồng kích hoạt
+            if ("SHIPPER".equalsIgnoreCase(account.getRole())) {
+                // Tài xế: Giữ isActive = false chờ Admin duyệt
+                account.setIsActive(false);
+            } else {
+                // Khách hàng (USER) hoặc Shop (VENDOR): Kích hoạt ngay
+                account.setIsActive(true);
+            }
+
             accountRepository.save(account);
             return true;
         }

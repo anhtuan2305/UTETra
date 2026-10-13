@@ -3,76 +3,292 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Đơn Hàng - Kênh Quán</title>
+    <title>Quản Lý Đơn Hàng - UTETra Kênh Quán</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; background-color: #f8fafc; }
+        :root {
+            --brand-navy: #0b1f3a;
+            --brand-blue: #004ea2;
+            --brand-red: #d8232a;
+            --brand-dark: #111827;
+            --brand-border: #e2e8f0;
+        }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--brand-dark);
+            min-height: 100vh;
+            margin: 0;
+            background-color: var(--brand-navy);
+            background-image: url('/images/wave-bg.png');
+            background-repeat: repeat-y;
+            background-position: center top;
+            background-size: 100% auto;
+            background-attachment: scroll;
+        }
+        .vendor-box {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+            padding: 2.5rem;
+        }
+        .text-brand-navy { color: var(--brand-navy) !important; }
+        .text-brand-blue { color: var(--brand-blue) !important; }
+        .text-brand-red { color: var(--brand-red) !important; }
+
+        /* Badge Trạng thái chuẩn UTETra */
+        .badge-status-new {
+            background-color: #ffffff;
+            color: var(--brand-blue);
+            border: 1.5px solid var(--brand-blue);
+            font-weight: 700;
+        }
+        .badge-status-prep {
+            background-color: var(--brand-navy);
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .badge-status-ship {
+            background-color: var(--brand-blue);
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .badge-status-done {
+            background-color: #ffffff;
+            color: var(--brand-navy);
+            border: 1.5px solid var(--brand-navy);
+            font-weight: 700;
+        }
+        .badge-status-cancel {
+            background-color: var(--brand-red);
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .btn-brand-navy {
+            background-color: var(--brand-navy);
+            color: #ffffff;
+            border: none;
+            transition: 0.2s;
+        }
+        .btn-brand-navy:hover {
+            background-color: var(--brand-blue);
+            color: #ffffff;
+        }
+        .btn-brand-navy-outline {
+            color: var(--brand-navy);
+            border: 1.5px solid var(--brand-navy);
+            background: transparent;
+            font-weight: 700;
+            transition: 0.2s;
+        }
+        .btn-brand-navy-outline:hover {
+            background-color: var(--brand-navy);
+            color: #ffffff;
+        }
+        .btn-brand-red {
+            background-color: var(--brand-red);
+            color: #ffffff;
+            border: none;
+            transition: 0.2s;
+        }
+        .btn-brand-red:hover {
+            background-color: #b7181e;
+            color: #ffffff;
+        }
     </style>
 </head>
 <body>
     <div th:replace="~{fragments/header :: header}"></div>
 
     <div class="container my-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <a th:href="@{/vendor/dashboard}" class="text-decoration-none small text-muted"><i class="bi bi-arrow-left"></i> Quay lại Dashboard</a>
-                <h4 class="fw-bold text-primary mb-0 mt-1"><i class="bi bi-receipt me-2"></i>Đơn Hàng Của Quán</h4>
+        <div class="vendor-box">
+            
+            <!-- Tiêu đề & Công cụ điều khiển -->
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom flex-wrap gap-2">
+                <div>
+                    <a th:href="@{/vendor/dashboard}" class="btn btn-sm btn-brand-navy-outline rounded-pill px-3 me-2">
+                        <i class="bi bi-arrow-left me-1"></i> Dashboard
+                    </a>
+                    <span class="fs-4 fw-bold text-brand-navy text-uppercase">Đơn Hàng Của Quán</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <!-- Nút Xóa Đơn Hàng Chọn Sẵn -->
+                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold" onclick="confirmBatchDelete()">
+                        <i class="bi bi-trash3 me-1"></i> Xóa Đã Chọn (<span id="selectedCount">0</span>)
+                    </button>
+                    <a th:href="@{/vendor/orders}" class="btn btn-sm btn-brand-navy-outline rounded-pill px-3">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Làm Mới
+                    </a>
+                </div>
             </div>
-            <a th:href="@{/vendor/orders}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
-                <i class="bi bi-arrow-clockwise me-1"></i> Làm mới
-            </a>
-        </div>
 
-        <div th:if="${message}" class="alert alert-success py-2 small" th:text="${message}"></div>
+            <!-- Flash thông báo -->
+            <div th:if="${message}" class="alert alert-primary py-2 small border-0 rounded-3 mb-4" th:text="${message}"></div>
+            <div th:if="${errorMessage}" class="alert alert-danger py-2 small border-0 rounded-3 mb-4" th:text="${errorMessage}"></div>
 
-        <div class="bg-white rounded-4 shadow-sm p-4 border">
+            <!-- Bảng danh sách đơn hàng -->
             <div class="table-responsive">
                 <table class="table align-middle">
                     <thead class="table-light">
-                        <tr>
-                            <th>Mã Đơn</th>
-                            <th>Thời Gian</th>
-                            <th>Người Nhận</th>
-                            <th>Địa Chỉ Nhận</th>
-                            <th>Tổng Tiền</th>
-                            <th>Trạng Thái</th>
-                            <th>Thao Tác</th>
+                        <tr class="text-secondary small">
+                            <th style="width: 40px;">
+                                <input type="checkbox" class="form-check-input" id="checkAll" onchange="toggleSelectAll(this)">
+                            </th>
+                            <th>MÃ ĐƠN</th>
+                            <th>THỜI GIAN</th>
+                            <th>NGƯỜI NHẬN</th>
+                            <th>ĐỊA CHỈ NHẬN</th>
+                            <th>TỔNG TIỀN</th>
+                            <th>TRẠNG THÁI</th>
+                            <th class="text-end">THAO TÁC</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:if="${#lists.isEmpty(orders)}">
-                            <td colspan="7" class="text-center text-muted py-4">Chưa có đơn hàng nào từ khách.</td>
+                            <td colspan="8" class="text-center text-muted py-5">Chưa có đơn hàng nào từ khách.</td>
                         </tr>
                         <tr th:each="o : ${orders}">
-                            <td class="fw-bold text-primary">#[[${o.id}]]</td>
-                            <td class="small" th:text="${#temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm')}">Thời gian</td>
-                            <td th:text="${o.address.receiverName} + ' (' + ${o.address.phone} + ')'">Khách</td>
-                            <td class="small text-muted" th:text="${o.address.streetAddress} + ', ' + ${o.address.city}">Địa chỉ</td>
-                            <td class="fw-bold text-danger" th:text="${#numbers.formatDecimal(o.finalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</td>
                             <td>
-                                <span th:if="${o.status == 'NEW'}" class="badge bg-warning text-dark">Chờ Quán Xác Nhận</span>
-                                <span th:if="${o.status == 'PREPARING'}" class="badge bg-info text-dark">Đang Pha Chế</span>
-                                <span th:if="${o.status == 'SHIPPING'}" class="badge bg-primary">Shipper Đang Giao</span>
-                                <span th:if="${o.status == 'COMPLETED'}" class="badge bg-success">Hoàn Tất</span>
+                                <!-- Chỉ cho phép chọn xóa đơn đã hoàn thành hoặc đã hủy -->
+                                <input th:if="${o.status == 'COMPLETED' or o.status == 'CANCELLED'}"
+                                       type="checkbox" form="deleteOrdersForm" name="orderIds" th:value="${o.id}" 
+                                       class="form-check-input order-checkbox" onchange="updateSelectedCount()">
+                                <span th:unless="${o.status == 'COMPLETED' or o.status == 'CANCELLED'}" class="text-muted small">
+                                    <i class="bi bi-dash"></i>
+                                </span>
                             </td>
+                            <td class="fw-bold text-brand-blue">#[[${o.id}]]</td>
+                            <td class="small fw-semibold text-dark" th:text="${#temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm')}">Thời gian</td>
                             <td>
-                                <form th:if="${o.status == 'NEW'}" th:action="@{/vendor/orders/update-status}" method="post" class="d-inline">
-                                    <input type="hidden" name="orderId" th:value="${o.id}">
-                                    <input type="hidden" name="status" value="PREPARING">
-                                    <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
-                                        <i class="bi bi-check-lg me-1"></i> Xác Nhận Làm Món
-                                    </button>
-                                </form>
+                                <span class="fw-semibold text-dark" th:text="${o.address != null ? o.address.receiverName : o.guestName}">Tên</span>
+                                <div class="small text-muted" th:text="${o.address != null ? o.address.phone : o.guestPhone}">SĐT</div>
+                            </td>
+                            <td class="small text-muted" th:text="${o.address != null ? (o.address.streetAddress + ', ' + o.address.city) : o.guestAddress}">Địa chỉ</td>
+                            <td class="fw-bold text-brand-red" th:text="${#numbers.formatDecimal(o.finalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</td>
+                            <td>
+                                <span th:if="${o.status == 'NEW'}" class="badge badge-status-new px-3 py-2 rounded-pill">
+                                    <i class="bi bi-hourglass-split me-1"></i> Chờ Xác Nhận
+                                </span>
+                                <span th:if="${o.status == 'PREPARING'}" class="badge badge-status-prep px-3 py-2 rounded-pill">
+                                    <i class="bi bi-cup-hot me-1"></i> Đang Pha Chế
+                                </span>
+                                <span th:if="${o.status == 'SHIPPING'}" class="badge badge-status-ship px-3 py-2 rounded-pill">
+                                    <i class="bi bi-bicycle me-1"></i> Đang Giao Hàng
+                                </span>
+                                <span th:if="${o.status == 'COMPLETED'}" class="badge badge-status-done px-3 py-2 rounded-pill">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Hoàn Tất
+                                </span>
+                                <span th:if="${o.status == 'CANCELLED'}" class="badge badge-status-cancel px-3 py-2 rounded-pill">
+                                    <i class="bi bi-x-circle me-1"></i> Đã Hủy
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <!-- Nút bấm nhận pha chế (gửi đúng form update-status độc lập) -->
+                                <button th:if="${o.status == 'NEW'}" 
+                                        type="button" 
+                                        th:onclick="'submitStatusUpdate(' + ${o.id} + ', \'PREPARING\')'"
+                                        class="btn btn-sm btn-brand-navy rounded-pill px-3 fw-bold">
+                                    <i class="bi bi-cup-hot me-1"></i> Làm Món
+                                </button>
+
+                                <!-- Nút xóa nhanh từng đơn đã hoàn tất / đã hủy -->
+                                <button th:if="${o.status == 'COMPLETED' or o.status == 'CANCELLED'}" 
+                                        type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2 border-0" 
+                                        th:data-order-id="${o.id}"
+                                        onclick="confirmSingleDelete(this.getAttribute('data-order-id'))" title="Xóa lịch sử đơn này">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
                             </td>
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Form xử lý xóa danh sách đơn (nằm riêng độc lập) -->
+            <form id="deleteOrdersForm" th:action="@{/vendor/orders/delete}" method="post"></form>
+
+            <!-- Form xử lý cập nhật trạng thái đơn (nằm riêng độc lập) -->
+            <form id="updateStatusForm" th:action="@{/vendor/orders/update-status}" method="post">
+                <input type="hidden" name="orderId" id="statusOrderId">
+                <input type="hidden" name="status" id="statusValue">
+            </form>
+
+        </div>
+    </div>
+
+    <!-- Modal Xác Nhận Xóa Tone Xanh Đỏ -->
+    <div class="modal fade" id="deleteOrderModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow" style="overflow: hidden;">
+                <div style="height: 6px; background-color: var(--brand-red);"></div>
+                <div class="modal-body p-4 text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-trash3-fill text-brand-red" style="font-size: 3.5rem;"></i>
+                    </div>
+                    <h5 class="fw-bold text-brand-navy mb-2">Xác Nhận Xóa Lịch Sử Đơn?</h5>
+                    <p class="text-muted small mb-4" id="deleteModalMessage">
+                        Hành động này sẽ xóa vĩnh viễn dữ liệu đơn hàng đã chọn khỏi hệ thống của quán.
+                    </p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-brand-navy-outline rounded-pill px-4 fw-bold" data-bs-dismiss="modal">
+                            Hủy Bỏ
+                        </button>
+                        <button type="button" class="btn btn-brand-red rounded-pill px-4 fw-bold" onclick="executeDelete()">
+                            Xác Nhận Xóa
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <div th:replace="~{fragments/footer :: footer}"></div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function toggleSelectAll(master) {
+            document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = master.checked);
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const count = document.querySelectorAll('.order-checkbox:checked').length;
+            document.getElementById('selectedCount').textContent = count;
+        }
+
+        function submitStatusUpdate(orderId, status) {
+            document.getElementById('statusOrderId').value = orderId;
+            document.getElementById('statusValue').value = status;
+            document.getElementById('updateStatusForm').submit();
+        }
+
+        function confirmBatchDelete() {
+            const checked = document.querySelectorAll('.order-checkbox:checked');
+            if (checked.length === 0) {
+                alert('Vui lòng tích chọn ít nhất một đơn hàng đã Hoàn Tất hoặc Đã Hủy để xóa!');
+                return;
+            }
+            document.getElementById('deleteModalMessage').textContent = 'Bạn có chắc chắn muốn xóa vĩnh viễn ' + checked.length + ' đơn hàng đã chọn khỏi lịch sử quán?';
+            const modal = new bootstrap.Modal(document.getElementById('deleteOrderModal'));
+            modal.show();
+        }
+
+        function confirmSingleDelete(orderId) {
+            document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = false);
+            const target = document.querySelector(`.order-checkbox[value='${orderId}']`);
+            if (target) target.checked = true;
+            updateSelectedCount();
+
+            document.getElementById('deleteModalMessage').textContent = 'Bạn có chắc muốn xóa vĩnh viễn đơn hàng #' + orderId + ' khỏi lịch sử quán?';
+            const modal = new bootstrap.Modal(document.getElementById('deleteOrderModal'));
+            modal.show();
+        }
+
+        function executeDelete() {
+            document.getElementById('deleteOrdersForm').submit();
+        }
+    </script>
 </body>
 </html>

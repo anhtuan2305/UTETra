@@ -7,6 +7,8 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import vn.tuan.dto.RegisterDTO;
+import vn.tuan.entity.Account;
+import vn.tuan.repository.AccountRepository;
 import vn.tuan.service.AccountService;
 
 @Controller
@@ -14,6 +16,9 @@ public class AuthController {
 
     @Autowired
     private AccountService accountService;
+
+    @Autowired
+    private AccountRepository accountRepository;
 
     @GetMapping("/login")
     public String showLoginForm() {
@@ -49,7 +54,16 @@ public class AuthController {
     public String handleVerifyOtp(@RequestParam("email") String email,
                                   @RequestParam("otp") String otp, Model model) {
         if (accountService.verifyOtp(email, otp)) {
-            model.addAttribute("successMessage", "Kích hoạt tài khoản thành công! Bạn có thể đăng nhập ngay.");
+            Account account = accountRepository.findByEmail(email).orElse(null);
+
+            // Phân nhánh thông báo: Shipper cần chờ Admin phê duyệt trước khi được đăng nhập
+            if (account != null && "SHIPPER".equalsIgnoreCase(account.getRole())) {
+                model.addAttribute("successMessage", 
+                        "Xác thực OTP thành công! Hồ sơ đối tác Shipper của bạn đang chờ Admin phê duyệt.");
+            } else {
+                model.addAttribute("successMessage", 
+                        "Kích hoạt tài khoản thành công! Bạn có thể đăng nhập ngay.");
+            }
             return "login";
         }
         model.addAttribute("email", email);

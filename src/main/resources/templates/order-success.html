@@ -53,7 +53,7 @@
 
                     <div class="d-flex gap-3 justify-content-center">
                         <a th:href="@{/}" class="btn btn-outline-primary rounded-pill px-4 fw-bold">Về Trang Chủ</a>
-                        <a th:href="@{/orders}" class="btn btn-danger rounded-pill px-4 fw-bold" style="background-color: #d8232a;">Xem Đơn Mua</a>
+                        <a th:href="@{'/orders/lookup?orderId=' + ${orderId}}" class="btn btn-danger rounded-pill px-4 fw-bold" style="background-color: #d8232a;">Xem Đơn Mua</a>
                     </div>
                 </div>
             </div>

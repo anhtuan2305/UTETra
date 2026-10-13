@@ -20,20 +20,22 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    // Cho phép null khi khách không đăng nhập
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "account_id", nullable = false)
-    private Account account; // Khách hàng
+    @JoinColumn(name = "account_id", nullable = true)
+    private Account account;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shop_id", nullable = false)
-    private Shop shop; // Thuộc gian hàng nào
+    private Shop shop;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shipper_id")
-    private Account shipper; // Shipper nhận giao (có thể null lúc đầu)
+    private Account shipper;
 
+    // Cho phép null nếu khách vãng lai chỉ nhập địa chỉ text trực tiếp
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "address_id", nullable = false)
+    @JoinColumn(name = "address_id", nullable = true)
     private Address address;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -44,17 +46,30 @@ public class Order {
     @JoinColumn(name = "promotion_id")
     private Promotion promotion;
 
+    // --- BỔ SUNG CÁC CỘT THÔNG TIN NGƯỜI NHẬN CHO KHÁCH VÃNG LAI ---
+    @Column(name = "guest_name", length = 100)
+    private String guestName;
+
+    @Column(name = "guest_phone", length = 20)
+    private String guestPhone;
+
+    @Column(name = "guest_address", length = 255)
+    private String guestAddress;
+
+    @Column(name = "note", length = 500)
+    private String note;
+
     @Column(nullable = false, length = 30)
     @Builder.Default
-    private String status = "NEW"; // NEW, CONFIRMED, PREPARING, DELIVERING, DELIVERED, CANCELLED, REFUNDED
+    private String status = "NEW";
 
     @Column(name = "payment_method", length = 20)
     @Builder.Default
-    private String paymentMethod = "COD"; // COD, VNPAY, MOMO
+    private String paymentMethod = "COD";
 
     @Column(name = "payment_status", length = 20)
     @Builder.Default
-    private String paymentStatus = "UNPAID"; // UNPAID, PAID
+    private String paymentStatus = "UNPAID";
 
     @Column(name = "total_amount", precision = 12, scale = 2)
     private BigDecimal totalAmount;

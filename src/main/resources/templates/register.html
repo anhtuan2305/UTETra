@@ -68,7 +68,7 @@
                     <!-- Chọn vai trò -->
                     <div class="mb-4">
                         <label class="form-label fw-semibold">Bạn muốn đăng ký với tư cách?</label>
-                        <div class="d-flex gap-3">
+                        <div class="d-flex flex-wrap gap-3">
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" th:field="*{role}" id="roleUser" value="USER" checked>
                                 <label class="form-check-label" for="roleUser">Khách hàng</label>
@@ -76,6 +76,10 @@
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" th:field="*{role}" id="roleVendor" value="VENDOR">
                                 <label class="form-check-label" for="roleVendor">Chủ quán (Shop)</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" th:field="*{role}" id="roleShipper" value="SHIPPER">
+                                <label class="form-check-label text-primary fw-semibold" for="roleShipper">Tài xế (Shipper)</label>
                             </div>
                         </div>
                     </div>

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import vn.tuan.entity.Account;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -18,4 +19,7 @@ public interface AccountRepository extends JpaRepository<Account, Integer> {
     
     // Đếm số lượng theo role
     long countByRole(String role);
+
+    // Lọc danh sách tài khoản theo Role và trạng thái kích hoạt (dùng cho Admin duyệt Shipper)
+    List<Account> findByRoleAndIsActiveOrderByCreatedAtDesc(String role, Boolean isActive);
 }

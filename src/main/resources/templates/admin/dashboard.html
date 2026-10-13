@@ -3,33 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Trị Hệ Thống - UTETra Admin</title>
+    <title>Trung Tâm Quản Trị - UTETra Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Montserrat', sans-serif;
-            background-color: #0b1f3a;
+        body { 
+            font-family: 'Montserrat', sans-serif; 
+            background-color: #0b1f3a; 
             background-image: url('/images/wave-bg.png');
             background-repeat: repeat-y;
+            background-position: center top;
             background-size: 100% auto;
-            background-attachment: scroll;
-            min-height: 100vh;
+            min-height: 100vh; 
         }
-        .admin-wrapper {
-            background: rgba(255, 255, 255, 0.98);
-            border-radius: 20px;
-            box-shadow: 0 10px 35px rgba(0,0,0,0.4);
-            padding: 2.5rem;
+        .admin-box { 
+            background: #fff; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25); 
+            padding: 2.5rem; 
         }
-        .metric-card {
-            border-radius: 16px;
-            border: 1px solid #e2e8f0;
-            padding: 1.5rem;
-            background: #ffffff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        .stat-card { 
+            border-radius: 14px; 
+            padding: 1.25rem 1.5rem; 
+            background: #fff; 
+            transition: all 0.2s ease; 
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
     </style>
 </head>
@@ -38,106 +40,147 @@
     <div th:replace="~{fragments/header :: header}"></div>
 
     <div class="container my-5">
-        <div class="admin-wrapper">
+        <div class="admin-box">
             
-            <!-- Tiêu đề & Thanh điều hướng nhanh -->
+            <!-- Header Admin & Hàng 4 nút điều hướng -->
             <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom flex-wrap gap-2">
                 <div>
-                    <h3 class="fw-bold mb-0 text-danger"><i class="bi bi-speedometer2 me-2"></i>TRUNG TÂM QUẢN TRỊ ADMIN</h3>
-                    <small class="text-muted">Kiểm soát toàn bộ người dùng, cửa hàng và giao dịch sàn UTETra</small>
+                    <h3 class="fw-bold mb-1" style="color: #004ea2;">
+                        <i class="bi bi-speedometer2 me-2" style="color: #d8232a;"></i>TRUNG TÂM QUẢN TRỊ ADMIN
+                    </h3>
+                    <small class="text-muted">Kiểm soát toàn bộ người dùng, cửa hàng, sản phẩm và giao dịch sàn UTETra</small>
                 </div>
-                <div class="d-flex gap-2">
-                    <a th:href="@{/admin/users}" class="btn btn-outline-primary rounded-pill px-3 fw-bold">
+                <div class="d-flex gap-2 flex-wrap">
+                    <a th:href="@{/admin/users}" class="btn btn-outline-primary rounded-pill px-3 fw-bold btn-sm">
                         <i class="bi bi-people me-1"></i> Người Dùng
                     </a>
-                    <a th:href="@{/admin/shops}" class="btn btn-outline-danger rounded-pill px-3 fw-bold">
+                    <a th:href="@{/admin/shops}" class="btn btn-outline-primary rounded-pill px-3 fw-bold btn-sm">
                         <i class="bi bi-shop me-1"></i> Gian Hàng
                     </a>
-                    <a th:href="@{/admin/orders}" class="btn btn-outline-success rounded-pill px-3 fw-bold">
+                    <a th:href="@{/admin/products}" class="btn btn-outline-danger rounded-pill px-3 fw-bold btn-sm">
+                        <i class="bi bi-cup-hot me-1"></i> Quản Lý Sản Phẩm
+                    </a>
+                    <a th:href="@{/admin/orders}" class="btn btn-primary rounded-pill px-3 fw-bold btn-sm" style="background-color: #004ea2; border: none;">
                         <i class="bi bi-receipt me-1"></i> Đơn Hàng Sàn
                     </a>
                 </div>
             </div>
 
-            <!-- 4 Khối thống kê chỉ số chính -->
-            <div class="row g-4 mb-5">
-                <div class="col-6 col-md-3">
-                    <div class="metric-card border-start border-4 border-primary">
-                        <div class="text-muted small fw-bold text-uppercase">Người Dùng</div>
-                        <h2 class="fw-bold mb-0 text-primary" th:text="${totalUsers}">0</h2>
+            <!-- 4 Thẻ Thống Kê Chỉ Số -->
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-lg-3">
+                    <div class="stat-card border border-2 border-primary border-start-0 border-end-0 border-bottom-0 shadow-sm">
+                        <span class="text-primary small fw-bold text-uppercase">Người Dùng</span>
+                        <h2 class="fw-bold mb-0 text-primary mt-1" th:text="${totalUsers}">5</h2>
                     </div>
                 </div>
-                <div class="col-6 col-md-3">
-                    <div class="metric-card border-start border-4 border-danger">
-                        <div class="text-muted small fw-bold text-uppercase">Cửa Hàng</div>
-                        <h2 class="fw-bold mb-0 text-danger" th:text="${totalShops}">0</h2>
+
+                <div class="col-6 col-lg-3">
+                    <div class="stat-card border border-2 border-danger border-start-0 border-end-0 border-bottom-0 shadow-sm">
+                        <span class="text-danger small fw-bold text-uppercase">Cửa Hàng</span>
+                        <h2 class="fw-bold mb-0 text-danger mt-1" th:text="${totalShops}">1</h2>
                     </div>
                 </div>
-                <div class="col-6 col-md-3">
-                    <div class="metric-card border-start border-4 border-warning">
-                        <div class="text-muted small fw-bold text-uppercase">Sản Phẩm Trà</div>
-                        <h2 class="fw-bold mb-0 text-warning" th:text="${totalProducts}">0</h2>
-                    </div>
+
+                <div class="col-6 col-lg-3">
+                    <a th:href="@{/admin/products}" class="text-decoration-none">
+                        <div class="stat-card border border-2 border-primary border-start-0 border-end-0 border-bottom-0 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-primary small fw-bold text-uppercase">Sản Phẩm Trà</span>
+                                <i class="bi bi-arrow-right-short text-primary fs-5"></i>
+                            </div>
+                            <h2 class="fw-bold mb-0 text-primary mt-1" th:text="${totalProducts}">8</h2>
+                        </div>
+                    </a>
                 </div>
-                <div class="col-6 col-md-3">
-                    <div class="metric-card border-start border-4 border-success">
-                        <div class="text-muted small fw-bold text-uppercase">Tổng Đơn Hàng</div>
-                        <h2 class="fw-bold mb-0 text-success" th:text="${totalOrders}">0</h2>
+
+                <div class="col-6 col-lg-3">
+                    <div class="stat-card border border-2 border-danger border-start-0 border-end-0 border-bottom-0 shadow-sm">
+                        <span class="text-danger small fw-bold text-uppercase">Tổng Đơn Hàng</span>
+                        <h2 class="fw-bold mb-0 text-danger mt-1" th:text="${totalOrders}">3</h2>
                     </div>
                 </div>
             </div>
 
-            <!-- 2 Bảng hiển thị thông tin gần nhất -->
+            <!-- Hai bảng thông tin mới nhất -->
             <div class="row g-4">
-                <!-- Bảng Gian hàng -->
-                <div class="col-12 col-lg-6">
-                    <div class="p-3 border rounded-4 bg-white h-100 shadow-sm">
-                        <h6 class="fw-bold text-danger mb-3"><i class="bi bi-shop me-2"></i>Gian Hàng Mới Nhất</h6>
-                        <table class="table table-sm align-middle">
-                            <thead>
-                                <tr>
-                                    <th>Tên Quán</th>
-                                    <th>Đánh giá</th>
-                                    <th>Trạng Thái</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr th:each="s : ${recentShops}">
-                                    <td class="fw-semibold" th:text="${s.shopName}">Quán</td>
-                                    <td><span class="badge bg-warning text-dark"><i class="bi bi-star-fill me-1"></i>[[${s.rating}]]</span></td>
-                                    <td>
-                                        <span th:if="${s.status == 'ACTIVE'}" class="badge bg-success">Đang hoạt động</span>
-                                        <span th:if="${s.status != 'ACTIVE'}" class="badge bg-danger">Bị cấm</span>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                <!-- Bảng Gian Hàng Mới Nhất -->
+                <div class="col-lg-6">
+                    <div class="border rounded-4 p-3 bg-white shadow-sm h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0" style="color: #004ea2;">
+                                <i class="bi bi-shop me-2" style="color: #d8232a;"></i>Gian Hàng Mới Nhất
+                            </h6>
+                            <a th:href="@{/admin/shops}" class="small text-muted text-decoration-none">Xem tất cả &gt;</a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr class="small text-muted">
+                                        <th>TÊN QUÁN</th>
+                                        <th>ĐÁNH GIÁ</th>
+                                        <th class="text-end">TRẠNG THÁI</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:if="${#lists.isEmpty(recentShops)}">
+                                        <td colspan="3" class="text-center text-muted py-3">Chưa có gian hàng nào.</td>
+                                    </tr>
+                                    <tr th:each="s : ${recentShops}">
+                                        <td class="fw-bold text-dark" th:text="${s.shopName}">Trà Sữa Đô Đô</td>
+                                        <td><i class="bi bi-star-fill text-warning"></i> [[${s.rating}]]</td>
+                                        <td class="text-end">
+                                            <!-- Hiển thị badge theo đúng status trong Database -->
+                                            <span th:if="${s.status == 'ACTIVE'}" class="badge bg-success-subtle text-success border border-success px-3 py-1 rounded-pill">
+                                                <i class="bi bi-check-circle-fill me-1"></i>Hoạt động
+                                            </span>
+                                            <span th:if="${s.status == 'PENDING'}" class="badge bg-warning-subtle text-warning border border-warning px-3 py-1 rounded-pill">
+                                                <i class="bi bi-hourglass-split me-1"></i>Chờ cấp phép
+                                            </span>
+                                            <span th:if="${s.status != 'ACTIVE' and s.status != 'PENDING'}" class="badge bg-danger-subtle text-danger border border-danger px-3 py-1 rounded-pill">
+                                                <i class="bi bi-slash-circle me-1"></i>Bị khóa
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Bảng Người dùng -->
-                <div class="col-12 col-lg-6">
-                    <div class="p-3 border rounded-4 bg-white h-100 shadow-sm">
-                        <h6 class="fw-bold text-primary mb-3"><i class="bi bi-people me-2"></i>Người Dùng Mới Nhất</h6>
-                        <table class="table table-sm align-middle">
-                            <thead>
-                                <tr>
-                                    <th>Email</th>
-                                    <th>Vai Trò</th>
-                                    <th>Kích Hoạt</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr th:each="u : ${recentUsers}">
-                                    <td class="small" th:text="${u.email}">user@gmail.com</td>
-                                    <td><span class="badge bg-secondary" th:text="${u.role}">USER</span></td>
-                                    <td>
-                                        <span th:if="${u.isActive}" class="text-success"><i class="bi bi-check-circle-fill"></i></span>
-                                        <span th:if="${!u.isActive}" class="text-danger"><i class="bi bi-x-circle-fill"></i></span>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                <!-- Bảng Người Dùng Mới Nhất -->
+                <div class="col-lg-6">
+                    <div class="border rounded-4 p-3 bg-white shadow-sm h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0" style="color: #004ea2;">
+                                <i class="bi bi-people me-2" style="color: #d8232a;"></i>Người Dùng Mới Nhất
+                            </h6>
+                            <a th:href="@{/admin/users}" class="small text-muted text-decoration-none">Xem tất cả &gt;</a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr class="small text-muted">
+                                        <th>EMAIL</th>
+                                        <th>VAI TRÒ</th>
+                                        <th class="text-end">KÍCH HOẠT</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:if="${#lists.isEmpty(recentUsers)}">
+                                        <td colspan="3" class="text-center text-muted py-3">Chưa có người dùng nào.</td>
+                                    </tr>
+                                    <tr th:each="u : ${recentUsers}">
+                                        <td class="small fw-semibold" th:text="${u.email}">admin@utetra.vn</td>
+                                        <td><span class="badge bg-light text-primary border" th:text="${u.role}">ADMIN</span></td>
+                                        <td class="text-end">
+                                            <i th:if="${u.isActive}" class="bi bi-check-circle-fill text-primary"></i>
+                                            <i th:unless="${u.isActive}" class="bi bi-x-circle-fill text-danger"></i>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>

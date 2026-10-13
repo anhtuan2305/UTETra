@@ -2,8 +2,6 @@ package vn.tuan.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -20,42 +18,41 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-        return configuration.getAuthenticationManager();
-    }
-
-    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable()) // Tắt CSRF để tiện test các form POST
             .authorizeHttpRequests(auth -> auth
-                // CÁC ĐƯỜNG DẪN CÔNG KHAI (Cho phép Guest và Chưa đăng nhập truy cập)
+                // CÁC ĐƯỜNG DẪN CÔNG KHAI
                 .requestMatchers(
                     "/", 
                     "/home", 
+                    "/cart/**",
+                    "/checkout/**",
+                    "/orders/lookup/**",  // <-- Bổ sung đường dẫn này để khách vãng lai tra cứu đơn
                     "/register/**", 
                     "/verify-otp/**", 
                     "/forgot-password/**", 
                     "/reset-password/**", 
                     "/login", 
+                    "/partner/**",        // Cho phép truy cập luồng đăng ký mở quán
                     "/products/**", 
                     "/css/**", 
                     "/js/**", 
                     "/images/**", 
-                    "/webjars/**", 
+                    "/uploads/**",       // Cho phép xem ảnh upload
                     "/favicon.ico"
                 ).permitAll()
                 
-                // CÁC ĐƯỜNG DẪN DÀNH CHO VENDOR (CHỦ QUÁN)
-                .requestMatchers("/vendor/**").hasRole("VENDOR")
+                // CÁC ĐƯỜNG DẪN DÀNH CHO VENDOR (CHỦ QUÁN): Cho phép cả VENDOR lẫn ROLE_VENDOR
+                .requestMatchers("/vendor/**").hasAnyAuthority("VENDOR", "ROLE_VENDOR")
                 
-                // CÁC ĐƯỜNG DẪN DÀNH CHO ADMIN (QUẢN TRỊ VIÊN)
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/manager/**").hasAnyRole("ADMIN", "MANAGER")
-             // CÁC ĐƯỜNG DẪN DÀNH CHO SHIPPER
-                .requestMatchers("/shipper/**").hasRole("SHIPPER")
+                // CÁC ĐƯỜNG DẪN DÀNH CHO ADMIN: Cho phép cả ADMIN lẫn ROLE_ADMIN
+                .requestMatchers("/admin/**").hasAnyAuthority("ADMIN", "ROLE_ADMIN")
                 
-                // TẤT CẢ CÁC ĐƯỜNG DẪN CÒN LẠI PHẢI ĐĂNG NHẬP
+                // CÁC ĐƯỜNG DẪN DÀNH CHO SHIPPER: Cho phép cả SHIPPER lẫn ROLE_SHIPPER
+                .requestMatchers("/shipper/**").hasAnyAuthority("SHIPPER", "ROLE_SHIPPER")
+                
+                // TẤT CẢ CÁC ĐƯỜNG DẪN CÒN LẠI PHẢI ĐĂNG NHẬP (VD: /orders, /orders/{id}, /profile)
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
