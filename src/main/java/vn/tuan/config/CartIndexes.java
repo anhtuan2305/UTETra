@@ -1,0 +1,5 @@
+package vn.tuan.config;
+import org.springframework.boot.ApplicationRunner;import org.springframework.context.annotation.*;import org.springframework.jdbc.core.JdbcTemplate;
+@Configuration public class CartIndexes {
+ @Bean ApplicationRunner cartUniqueIndexes(JdbcTemplate jdbc){return args->{String db=jdbc.execute((org.springframework.jdbc.core.ConnectionCallback<String>)c->c.getMetaData().getDatabaseProductName());if(db.contains("Microsoft")){jdbc.execute("IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='ux_cart_account' AND object_id=OBJECT_ID('carts')) CREATE UNIQUE INDEX ux_cart_account ON carts(account_id) WHERE account_id IS NOT NULL");jdbc.execute("IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='ux_cart_session' AND object_id=OBJECT_ID('carts')) CREATE UNIQUE INDEX ux_cart_session ON carts(session_id) WHERE session_id IS NOT NULL");}else if(db.contains("H2")){jdbc.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_cart_account ON carts(account_id)");jdbc.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_cart_session ON carts(session_id)");}};}
+}

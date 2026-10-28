@@ -14,6 +14,8 @@ import java.util.Optional;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Integer> {
+    Optional<Order> findByPaymentReference(String ref);
+    List<Order> findByPaymentMethodAndPaymentStatusInAndStatus(String method,List<String> paymentStates,String status);
 
     List<Order> findByAccountOrderByCreatedAtDesc(Account account);
     
@@ -33,4 +35,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     @Query("SELECT o FROM Order o LEFT JOIN o.address a " +
            "WHERE o.id = :orderId AND (o.guestPhone = :phone OR a.phone = :phone)")
     Optional<Order> findByIdAndPhone(@Param("orderId") Integer orderId, @Param("phone") String phone);
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select x from Order x where x.id = :id")
+    java.util.Optional<Order> lockById(@org.springframework.data.repository.query.Param("id") Integer id);
 }

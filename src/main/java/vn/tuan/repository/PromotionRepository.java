@@ -8,5 +8,6 @@ import java.util.Optional;
 
 @Repository
 public interface PromotionRepository extends JpaRepository<Promotion, Integer> {
+    java.util.Optional<vn.tuan.entity.Promotion> findByCodeIgnoreCase(String code);
     Optional<Promotion> findByCodeIgnoreCaseAndIsActiveTrue(String code);
 }

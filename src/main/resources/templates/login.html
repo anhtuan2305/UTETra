@@ -65,7 +65,7 @@
         }
     </style>
 </head>
-<body>
+<body th:attr="data-signed-in=${#authorization.expression('isAuthenticated()') ? 'true' : null}">
 
     <div class="login-card">
         <!-- Logo & Header -->
@@ -119,5 +119,5 @@
         </div>
     </div>
 
-</body>
+<script src="/js/live-orders.js"></script></body>
 </html>

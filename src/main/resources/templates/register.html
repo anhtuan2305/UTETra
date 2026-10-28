@@ -30,7 +30,7 @@
         }
     </style>
 </head>
-<body>
+<body th:attr="data-signed-in=${#authorization.expression('isAuthenticated()') ? 'true' : null}">
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-12 col-md-8 col-lg-5">
@@ -73,10 +73,7 @@
                                 <input class="form-check-input" type="radio" th:field="*{role}" id="roleUser" value="USER" checked>
                                 <label class="form-check-label" for="roleUser">Khách hàng</label>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" th:field="*{role}" id="roleVendor" value="VENDOR">
-                                <label class="form-check-label" for="roleVendor">Chủ quán (Shop)</label>
-                            </div>
+                            <p class="small text-muted">Muốn mở quán: đăng ký Khách hàng, xác minh email rồi chọn Đăng ký đối tác sau khi đăng nhập.</p>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" th:field="*{role}" id="roleShipper" value="SHIPPER">
                                 <label class="form-check-label text-primary fw-semibold" for="roleShipper">Tài xế (Shipper)</label>
@@ -95,5 +92,5 @@
         </div>
     </div>
 </div>
-</body>
+<script src="/js/live-orders.js"></script></body>
 </html>

@@ -5,7 +5,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Reviews")
+@Table(name = "Reviews", uniqueConstraints = @UniqueConstraint(columnNames={"account_id","product_id","order_id"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -25,14 +25,14 @@ public class Review {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", unique = true, nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
     @Column(nullable = false)
     private Integer rating; // 1 - 5 sao
 
-    @Column(nullable = false, columnDefinition = "NVARCHAR(MAX)")
+    @Column(nullable = false, length = 4000)
     private String comment; // Tối thiểu 50 ký tự (sẽ validate ở tầng Service)
 
     @Column(name = "media_url", length = 500)

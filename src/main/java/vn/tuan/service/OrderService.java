@@ -1,151 +1,337 @@
 package vn.tuan.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.persistence.EntityManager;
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.tuan.dto.CheckoutDTO;
-import vn.tuan.entity.*;
-import vn.tuan.repository.*;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+import vn.tuan.dto.CheckoutDTO;
+import vn.tuan.entity.Account;
+import vn.tuan.entity.Carrier;
+import vn.tuan.entity.Cart;
+import vn.tuan.entity.CartItem;
+import vn.tuan.entity.Order;
+import vn.tuan.entity.OrderDetail;
+import vn.tuan.entity.Product;
+import vn.tuan.entity.Shop;
+import vn.tuan.repository.AccountRepository;
+import vn.tuan.repository.CarrierRepository;
+import vn.tuan.repository.CartRepository;
+import vn.tuan.repository.OrderRepository;
+import vn.tuan.repository.ProductRepository;
+import vn.tuan.repository.ShopRepository;
 
 @Service
+@RequiredArgsConstructor
 public class OrderService {
 
-    @Autowired
-    private AccountRepository accountRepository;
+    private final AccountRepository accounts;
+    private final CartRepository carts;
+    private final ProductRepository products;
+    private final ShopRepository shops;
+    private final OrderRepository orders;
+    private final CarrierRepository carriers;
 
-    @Autowired
-    private CartRepository cartRepository;
+    private final OrderEvents events;
+    private final PaymentService payments;
+    private final QuoteService quotes;
 
-    @Autowired
-    private CartItemRepository cartItemRepository;
-
-    @Autowired
-    private AddressRepository addressRepository;
-
-    @Autowired
-    private OrderRepository orderRepository;
-
-    @Autowired
-    private OrderDetailRepository orderDetailRepository;
-
-    @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private ShopRepository shopRepository;
+    private final EntityManager em;
 
     @Transactional
     public Order placeOrder(String identifier, CheckoutDTO dto) {
+
+        // 1. Kiểm tra định danh và dữ liệu đầu vào.
+        OrderRules.require(
+                identifier != null && !identifier.isBlank(),
+                "Không xác định được tài khoản hoặc phiên giỏ hàng"
+        );
+
+        OrderRules.require(
+                dto != null,
+                "Thông tin đặt hàng không hợp lệ"
+        );
+
+        // 2. Kiểm tra phương thức thanh toán.
+        boolean isCod = "COD".equals(dto.getPaymentMethod());
+        boolean isVnpay = "VNPAY".equals(dto.getPaymentMethod());
+
+        OrderRules.require(
+                isCod || (isVnpay && payments.available()),
+                "Phương thức thanh toán chưa được cấu hình"
+        );
+
+        // 3. Xác định tài khoản hoặc khách vãng lai.
         Account account = null;
-        Cart cart = null;
 
-        // 1. Xác định tài khoản và giỏ hàng (Đăng nhập vs Khách vãng lai)
-        if (identifier != null && !identifier.trim().isEmpty() && !identifier.startsWith("GUEST_")) {
-            account = accountRepository.findByEmail(identifier).orElse(null);
-            if (account != null) {
-                cart = cartRepository.findByAccount(account).orElse(null);
-            }
-        } else if (identifier != null && identifier.startsWith("GUEST_")) {
-            cart = cartRepository.findBySessionId(identifier).orElse(null);
+        if (!identifier.startsWith("GUEST_")) {
+            account = accounts.findByEmail(identifier)
+                    .orElseThrow(() ->
+                            new IllegalArgumentException(
+                                    "Không tìm thấy tài khoản"
+                            )
+                    );
+
+            OrderRules.require(
+                    Boolean.TRUE.equals(account.getIsActive()),
+                    "Tài khoản bị khóa hoặc chưa được kích hoạt"
+            );
         }
 
-        if (cart == null || cart.getItems() == null || cart.getItems().isEmpty()) {
-            throw new RuntimeException("Giỏ hàng đang trống, không thể đặt hàng!");
+        // 4. Tìm giỏ hàng tương ứng.
+        Cart foundCart;
+
+        if (account == null) {
+            foundCart = carts.findBySessionId(identifier)
+                    .orElseThrow(() ->
+                            new IllegalArgumentException("Giỏ hàng trống")
+                    );
+        } else {
+            foundCart = carts.findByAccount(account)
+                    .orElseThrow(() ->
+                            new IllegalArgumentException("Giỏ hàng trống")
+                    );
         }
 
-        // 2. Lưu địa chỉ giao hàng (Account nhận null đối với khách vãng lai)
-        Address address = new Address();
-        address.setAccount(account);
-        address.setReceiverName(dto.getReceiverName());
-        address.setPhone(dto.getPhone());
-        address.setStreetAddress(dto.getStreetAddress());
-        address.setCity(dto.getCity());
-        address.setIsDefault(account != null);
+        // 5. Khóa giỏ và đọc lại dữ liệu mới nhất từ database.
+        Cart cart = carts.lockById(foundCart.getId())
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Không tìm thấy giỏ hàng"
+                        )
+                );
 
-        address = addressRepository.save(address);
+        em.refresh(cart);
 
-        // 3. Xác định chi nhánh quán phục vụ từ lựa chọn của khách hàng
-        Shop orderShop = null;
-        if (dto.getShopId() != null) {
-            orderShop = shopRepository.findById(dto.getShopId()).orElse(null);
+        OrderRules.require(
+                !cart.getItems().isEmpty(),
+                "Giỏ hàng đã được thanh toán hoặc đang trống"
+        );
+
+        // 6. Kiểm tra chi nhánh.
+        OrderRules.require(
+                dto.getShopId() != null,
+                "Vui lòng chọn chi nhánh"
+        );
+
+        Shop shop = shops.findById(dto.getShopId())
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Không tìm thấy chi nhánh"
+                        )
+                );
+
+        OrderRules.require(
+                "ACTIVE".equals(shop.getStatus()),
+                "Chi nhánh không hoạt động"
+        );
+
+        // 7. Kiểm tra đơn vị vận chuyển.
+        Carrier carrier;
+
+        if (dto.getCarrierId() == null) {
+            carrier = carriers.findAll()
+                    .stream()
+                    .filter(item ->
+                            Boolean.TRUE.equals(item.getIsActive())
+                    )
+                    .filter(item ->
+                            item.getShop() == null
+                                    || item.getShop().getId()
+                                            .equals(shop.getId())
+                    )
+                    .findFirst()
+                    .orElseThrow(() ->
+                            new IllegalArgumentException(
+                                    "Chưa có đơn vị giao hàng phù hợp"
+                            )
+                    );
+        } else {
+            carrier = carriers.findById(dto.getCarrierId())
+                    .orElseThrow(() ->
+                            new IllegalArgumentException(
+                                    "Không tìm thấy đơn vị giao hàng"
+                            )
+                    );
         }
-        
-        // Dự phòng: nếu khách không chọn shopId thì lấy shop từ sản phẩm đầu tiên
-        if (orderShop == null && !cart.getItems().isEmpty() && cart.getItems().get(0).getProduct() != null) {
-            orderShop = cart.getItems().get(0).getProduct().getShop();
-        }
 
-        if (orderShop == null) {
-            throw new RuntimeException("Không tìm thấy chi nhánh quán phục vụ đơn hàng!");
-        }
+        OrderRules.require(
+                Boolean.TRUE.equals(carrier.getIsActive()),
+                "Đơn vị giao hàng đã ngừng hoạt động"
+        );
 
-        BigDecimal totalAmount = BigDecimal.ZERO;
-        BigDecimal shippingFee = new BigDecimal("15000");
+        OrderRules.require(
+                carrier.getShop() == null
+                        || carrier.getShop().getId().equals(shop.getId()),
+                "Đơn vị giao hàng không áp dụng cho chi nhánh này"
+        );
 
-        List<OrderDetail> detailsToSave = new ArrayList<>();
-
-        for (CartItem item : cart.getItems()) {
-            BigDecimal itemTotal = item.getProduct().getBasePrice()
-                    .multiply(BigDecimal.valueOf(item.getQuantity()));
-            totalAmount = totalAmount.add(itemTotal);
-
-            // Cập nhật tồn kho và lượt bán
-            Product prod = item.getProduct();
-            if (prod.getStock() != null) {
-                prod.setStock(prod.getStock() - item.getQuantity());
-            }
-            if (prod.getSoldCount() != null) {
-                prod.setSoldCount(prod.getSoldCount() + item.getQuantity());
-            } else {
-                prod.setSoldCount(item.getQuantity());
-            }
-            productRepository.save(prod);
-        }
-
-        BigDecimal finalAmount = totalAmount.add(shippingFee);
-
-        // 4. Khởi tạo đối tượng Order gắn với đúng chi nhánh Shop đã chọn
+        // 8. Khởi tạo đơn hàng.
         Order order = Order.builder()
                 .account(account)
-                .shop(orderShop)
-                .address(address)
-                .guestName(dto.getReceiverName())
+                .shop(shop)
+                .carrier(carrier)
+                .guestName(dto.getReceiverName().trim())
                 .guestPhone(dto.getPhone())
-                .guestAddress(dto.getStreetAddress() + ", " + dto.getCity())
+                .guestAddress(
+                        dto.getStreetAddress() + ", " + dto.getCity()
+                )
                 .note(dto.getNote())
                 .status("NEW")
                 .paymentMethod(dto.getPaymentMethod())
-                .paymentStatus("COD".equalsIgnoreCase(dto.getPaymentMethod()) ? "UNPAID" : "PAID")
-                .totalAmount(totalAmount)
-                .shippingFee(shippingFee)
+                .paymentReference(UUID.randomUUID().toString())
+                .paymentExpiresAt(
+                        LocalDateTime.now().plusMinutes(20)
+                )
+                .paymentStatus("UNPAID")
+                .shippingFee(carrier.getBaseFee())
                 .discountAmount(BigDecimal.ZERO)
-                .finalAmount(finalAmount)
                 .build();
 
-        order = orderRepository.save(order);
+        BigDecimal totalAmount = BigDecimal.ZERO;
 
-        // 5. Lưu từng dòng OrderDetail
-        for (CartItem item : cart.getItems()) {
+        // 9. Khóa sản phẩm theo thứ tự ID thống nhất.
+        // Mỗi sản phẩm chỉ khóa và refresh một lần,
+        // kể cả khi giỏ có nhiều dòng tùy chọn của cùng sản phẩm.
+        Map<Integer, Product> lockedProducts = new HashMap<>();
+
+        var productIds = cart.getItems()
+                .stream()
+                .map(item -> item.getProduct().getId())
+                .distinct()
+                .sorted()
+                .toList();
+
+        for (Integer productId : productIds) {
+            Product product = products.lockById(productId)
+                    .orElseThrow(() ->
+                            new IllegalArgumentException(
+                                    "Sản phẩm không còn tồn tại"
+                            )
+                    );
+
+            em.refresh(product);
+            lockedProducts.put(productId, product);
+        }
+
+        // 10. Kiểm tra từng dòng giỏ, trừ tồn và lưu chi tiết đơn.
+        var sortedItems = cart.getItems()
+                .stream()
+                .sorted(
+                        Comparator.comparing(
+                                item -> item.getProduct().getId()
+                        )
+                )
+                .toList();
+
+        for (CartItem item : sortedItems) {
+            Product product = lockedProducts.get(
+                    item.getProduct().getId()
+            );
+
+            OrderRules.require(
+                    product.getShop().getId().equals(shop.getId()),
+                    "Món không thuộc chi nhánh đã chọn"
+            );
+
+            OrderRules.require(
+                    "ACTIVE".equals(product.getStatus()),
+                    "Món đã ngừng bán: " + product.getName()
+            );
+
+            OrderRules.quantity(
+                    item.getQuantity(),
+                    product.getStock()
+            );
+
+            product.setStock(
+                    product.getStock() - item.getQuantity()
+            );
+
+            product.setSoldCount(
+                    product.getSoldCount() + item.getQuantity()
+            );
+
+            // Giá thực tế gồm giá gốc, size và topping.
+            BigDecimal unitPrice = OptionPricing.price(
+                    product.getBasePrice(),
+                    item.getOptionsJson()
+            );
+
+            BigDecimal lineTotal = unitPrice.multiply(
+                    BigDecimal.valueOf(item.getQuantity())
+            );
+
+            totalAmount = totalAmount.add(lineTotal);
+
             OrderDetail detail = OrderDetail.builder()
                     .order(order)
-                    .product(item.getProduct())
-                    .productName(item.getProduct().getName())
-                    .unitPrice(item.getProduct().getBasePrice())
+                    .product(product)
+                    .productName(product.getName())
+                    .unitPrice(unitPrice)
                     .quantity(item.getQuantity())
                     .optionsSnapshot(item.getOptionsJson())
                     .build();
-            detailsToSave.add(detail);
-        }
-        orderDetailRepository.saveAll(detailsToSave);
 
-        // 6. Dọn sạch giỏ hàng sau khi hoàn tất đặt đơn
-        cartItemRepository.deleteAll(cart.getItems());
+            order.getOrderDetails().add(detail);
+        }
+
+        // 11. Tính phí giao hàng và mã giảm giá trên server.
+        order.setTotalAmount(totalAmount);
+
+        QuoteService.Quote quote = quotes.calculate(
+                totalAmount,
+                shop.getId(),
+                carrier.getId(),
+                dto.getPromotionCode()
+        );
+
+        order.setCarrier(quote.carrier());
+        order.setPromotion(quote.promotion());
+        order.setShippingFee(quote.shipping());
+        order.setDiscountAmount(quote.discount());
+        order.setFinalAmount(quote.total());
+
+        // 12. Snapshot chiết khấu ứng dụng tại thời điểm đặt.
+        BigDecimal commissionPercent =
+                shop.getCommissionPercent() == null
+                        ? BigDecimal.ZERO
+                        : shop.getCommissionPercent();
+
+        BigDecimal commissionAmount = totalAmount
+                .multiply(commissionPercent)
+                .divide(
+                        BigDecimal.valueOf(100),
+                        0,
+                        RoundingMode.HALF_UP
+                );
+
+        order.setCommissionAmount(commissionAmount);
+
+        // 13. Lưu đơn hàng và chi tiết đơn.
+        orders.saveAndFlush(order);
+
+        // 14. Xóa các món trong giỏ.
+        // Cart.items có orphanRemoval nên các dòng CartItem
+        // được xóa khỏi database khi flush.
         cart.getItems().clear();
-        cartRepository.save(cart);
+
+        // Đồng bộ việc xóa trước khi checkout khác refresh giỏ.
+        // Flush không phải commit: nếu giao dịch thất bại,
+        // toàn bộ thay đổi vẫn được rollback.
+        em.flush();
+
+        // 15. Đăng ký thông báo sau khi giao dịch commit.
+        events.changed(order);
 
         return order;
     }

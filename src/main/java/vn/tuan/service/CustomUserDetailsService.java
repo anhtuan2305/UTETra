@@ -21,7 +21,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Account account = accountRepository.findByEmail(email)
+        Account account = accountRepository.findByEmail(email.trim().toLowerCase(java.util.Locale.ROOT))
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản với email: " + email));
 
         // Kiểm tra trạng thái kích hoạt tài khoản
@@ -35,7 +35,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         return new User(
                 account.getEmail(),
                 account.getPassword(),
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + account.getRole()))
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + account.getRole().replace("ROLE_", "")))
         );
     }
 }

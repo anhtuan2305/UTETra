@@ -1,0 +1,8 @@
+package vn.tuan.config;
+import org.springframework.context.annotation.*;import org.springframework.core.annotation.Order;import org.springframework.beans.factory.annotation.Value;import javax.crypto.spec.SecretKeySpec;import java.security.SecureRandom;import java.time.*;import org.springframework.security.oauth2.jwt.*;import org.springframework.security.oauth2.jose.jws.MacAlgorithm;import org.springframework.security.web.SecurityFilterChain;import org.springframework.security.config.annotation.web.builders.HttpSecurity;import org.springframework.security.config.http.SessionCreationPolicy;
+@Configuration public class ApiSecurity {
+ @Bean SecretKeySpec jwtKey(@Value("${app.jwt.secret:}")String secret){byte[] bytes;if(secret.isBlank()){bytes=new byte[32];new SecureRandom().nextBytes(bytes);}else{bytes=secret.getBytes(java.nio.charset.StandardCharsets.UTF_8);if(bytes.length<32)throw new IllegalArgumentException("JWT_SECRET phải có ít nhất 32 byte");}return new SecretKeySpec(bytes,"HmacSHA256");}
+ @Bean JwtEncoder jwtEncoder(SecretKeySpec key){return new NimbusJwtEncoder(new com.nimbusds.jose.jwk.source.ImmutableSecret<>(key));}
+ @Bean JwtDecoder jwtDecoder(SecretKeySpec key){NimbusJwtDecoder decoder=NimbusJwtDecoder.withSecretKey(key).macAlgorithm(MacAlgorithm.HS256).build();decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer("utetra"));return decoder;}
+ @Bean @Order(1) SecurityFilterChain api(HttpSecurity h)throws Exception{h.securityMatcher("/api/**").csrf(c->c.disable()).sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS)).authorizeHttpRequests(a->a.requestMatchers("/api/auth/token").permitAll().anyRequest().authenticated()).oauth2ResourceServer(o->o.jwt(j->{}));return h.build();}
+}

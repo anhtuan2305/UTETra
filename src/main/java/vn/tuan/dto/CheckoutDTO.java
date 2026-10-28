@@ -9,20 +9,27 @@ public class CheckoutDTO {
     private Integer shopId;
 
     @NotBlank(message = "Tên người nhận không được để trống")
-    private String receiverName;
+    @jakarta.validation.constraints.Size(max=100) private String receiverName;
 
     @NotBlank(message = "Số điện thoại không được để trống")
+    @jakarta.validation.constraints.Pattern(regexp="0[0-9]{9}",message="Số điện thoại gồm 10 chữ số, bắt đầu bằng 0")
     private String phone;
 
     @NotBlank(message = "Địa chỉ nhận hàng không được để trống")
-    private String streetAddress;
+    @jakarta.validation.constraints.Size(max=180) private String streetAddress;
 
     @NotBlank(message = "Tỉnh / Thành phố không được để trống")
-    private String city = "TP. Hồ Chí Minh";
+    @jakarta.validation.constraints.Size(max=60) private String city = "TP. Hồ Chí Minh";
 
     private String paymentMethod = "COD";
 
-    private String note;
+    @jakarta.validation.constraints.Size(max=500) private String note;
+    private String promotionCode;
+    private Integer carrierId;
+    public String getPromotionCode(){return promotionCode;}
+    public void setPromotionCode(String x){promotionCode=x;}
+    public Integer getCarrierId(){return carrierId;}
+    public void setCarrierId(Integer x){carrierId=x;}
 
     public CheckoutDTO() {
     }

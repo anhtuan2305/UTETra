@@ -1,0 +1,6 @@
+package vn.tuan.config;
+import org.springframework.stereotype.Component;import org.springframework.core.annotation.Order;import org.springframework.web.filter.OncePerRequestFilter;import jakarta.servlet.*;import jakarta.servlet.http.*;import java.io.*;import java.util.concurrent.*;
+@Component @Order(0) public class RateLimitFilter extends OncePerRequestFilter {
+ private record Window(long start,int count){} private final ConcurrentHashMap<String,Window> windows=new ConcurrentHashMap<>();
+ protected void doFilterInternal(HttpServletRequest r,HttpServletResponse s,FilterChain c)throws IOException,ServletException{String p=r.getRequestURI();if("POST".equals(r.getMethod()) && (p.startsWith("/register") || p.equals("/login") || p.equals("/verify-otp") || p.equals("/forgot-password") || p.equals("/reset-password") || p.equals("/orders/lookup") || p.equals("/api/auth/token"))){long now=System.currentTimeMillis();if(windows.size()>10000)windows.entrySet().removeIf(e->now-e.getValue().start()>60000);String key=r.getRemoteAddr()+":"+p;Window w=windows.compute(key,(k,v)->v==null || now-v.start()>60000?new Window(now,1):new Window(v.start(),v.count()+1));if(w.count()>15){s.setStatus(429);s.setHeader("Retry-After","60");s.getWriter().write("Too many attempts. Retry in 60 seconds.");return;}}c.doFilter(r,s);}
+}

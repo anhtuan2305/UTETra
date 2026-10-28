@@ -1,4 +1,5 @@
 package vn.tuan.repository;
+import org.springframework.data.jpa.repository.Query;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,7 +12,7 @@ import vn.tuan.entity.Shop;
 import java.util.List;
 
 @Repository
-public interface ProductRepository extends JpaRepository<Product, Integer> {
+public interface ProductRepository extends JpaRepository<Product, Integer>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<Product> {
 
     // Lấy sản phẩm đang bán có phân trang
     Page<Product> findByStatus(String status, Pageable pageable);
@@ -30,4 +31,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     // DÀNH CHO USER: Lấy theo thứ tự tạo mới nhất
     Page<Product> findByStatusOrderByCreatedAtDesc(String status, Pageable pageable);
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select x from Product x where x.id = :id")
+    java.util.Optional<Product> lockById(@org.springframework.data.repository.query.Param("id") Integer id);
 }

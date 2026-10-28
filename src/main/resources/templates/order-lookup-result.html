@@ -10,7 +10,7 @@
         .box { background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); padding: 2rem; }
     </style>
 </head>
-<body>
+<body th:attr="data-signed-in=${#authorization.expression('isAuthenticated()') ? 'true' : null}">
     <div class="container my-5" style="max-width: 750px;">
         <div class="box">
             <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
@@ -48,5 +48,5 @@
             </div>
         </div>
     </div>
-</body>
+<script src="/js/live-orders.js"></script></body>
 </html>

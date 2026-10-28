@@ -1,155 +1,219 @@
+
 package vn.tuan.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.math.BigDecimal;
+import java.util.List;
+
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import lombok.RequiredArgsConstructor;
+
 import vn.tuan.entity.*;
 import vn.tuan.repository.*;
 
-import java.math.BigDecimal;
-
 @Component
+@ConditionalOnProperty(
+    name = "app.seed.enabled",
+    havingValue = "true"
+)
+@RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
 
-    @Autowired
-    private AccountRepository accountRepository;
+    private final AccountRepository accounts;
+    private final ShopRepository shops;
+    private final ProductRepository products;
+    private final CategoryRepository categories;
+    private final CarrierRepository carriers;
+    private final PromotionRepository promotions;
+    private final PasswordEncoder passwords;
 
-    @Autowired
-    private ShopRepository shopRepository;
-
-    @Autowired
-    private CategoryRepository categoryRepository;
-
-    @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private CarrierRepository carrierRepository;
-
-    @Autowired
-    private PromotionRepository promotionRepository;
+    private Account account(String email, String role) {
+        return accounts.findByEmail(email)
+                .orElseGet(() -> accounts.save(
+                        Account.builder()
+                                .email(email)
+                                .password(passwords.encode("Utetra@123"))
+                                .role(role)
+                                .isActive(true)
+                                .emailVerified(true)
+                                .build()
+                ));
+    }
 
     @Override
-    public void run(String... args) throws Exception {
+    @Transactional
+    public void run(String... args) {
 
-        // 1. TẠO TÀI KHOẢN ADMIN MẪU (NẾU CHƯA CÓ)
-        if (!accountRepository.existsByEmail("admin@utetra.vn")) {
-            Account adminAcc = Account.builder()
-                    .email("admin@utetra.vn")
-                    .password(passwordEncoder.encode("admin123"))
-                    .role("ADMIN")
-                    .isActive(true)
-                    .build();
-            accountRepository.save(adminAcc);
+        // 1. Khoi tao tai khoan
+        account("admin@utetra.vn", "ADMIN");
+        account("user@utetra.vn", "USER");
+        account("shipper1@utetra.vn", "SHIPPER");
+        account("shipper2@utetra.vn", "SHIPPER");
+
+        Account manager = account(
+                "manager@utetra.vn",
+                "MANAGER"
+        );
+
+        // 2. Khoi tao don vi van chuyen
+        if (carriers.count() == 0) {
+            carriers.save(
+                    new Carrier(
+                            "UTETra Express",
+                            new BigDecimal("15000"),
+                            true
+                    )
+            );
         }
 
-        // 2. TẠO TÀI KHOẢN SHIPPER MẪU (NẾU CHƯA CÓ)
-        if (!accountRepository.existsByEmail("shipper1@utetra.vn")) {
-            Account shipperAcc = Account.builder()
-                    .email("shipper1@utetra.vn")
-                    .password(passwordEncoder.encode("123456"))
-                    .role("SHIPPER")
-                    .isActive(true)
-                    .build();
-            accountRepository.save(shipperAcc);
+        // 3. Khoi tao danh muc san pham
+        if (categories.count() == 0) {
+
+            categories.save(
+                    Category.builder()
+                            .name("Trà sữa")
+                            .build()
+            );
+
+            categories.save(
+                    Category.builder()
+                            .name("Trà trái cây")
+                            .build()
+            );
+
+            categories.save(
+                    Category.builder()
+                            .name("Ô long")
+                            .build()
+            );
         }
 
-        // 3. BẬT LẠI: TẠO CÁC ĐƠN VỊ VẬN CHUYỂN MẪU
-        if (carrierRepository.count() == 0) {
-            carrierRepository.save(new Carrier(
-                    "Giao Hàng Tiêu Chuẩn (UTETra Express)",
-                    new BigDecimal("15000"),
-                    true
-            ));
+        List<Category> cs = categories.findAll();
 
-            carrierRepository.save(new Carrier(
-                    "Giao Hỏa Tốc 30 Phút (GrabExpress / Be)",
-                    new BigDecimal("25000"),
-                    true
-            ));
+        // 4. Duong dan anh san pham
+        String[] photos = {
+                "/uploads/products/1791698269049_Tr%C3%A0%20sua%20khoai%20mon%20hoang%20kim.jpg",
+                "/uploads/products/1791698893043_tr%C3%A0%20s%E1%BB%AFa%20th%C3%A1i%20xanh.jpg",
+                "/uploads/products/1791699141701_tr%C3%A0%20s%E1%BB%AFa%20th%C3%A1i%20xanh.jpg",
+                "/uploads/products/1791799500122_Tr__S_a_Th_i__xanh.jpg",
+                "/uploads/products/1791799588439_tr__chanh_d_y.jpg",
+                "/uploads/products/1791799900962_tr__xanh_nh_i.jpg",
+                "/uploads/products/1791800081664_tr____long.jpg",
+                "/uploads/products/1791800247219_tr__s_a_th_i_xanh_m_i.jpg",
+                "/uploads/products/1791800759989_tr__s_a_khoai_m_n.jpg",
+                "/uploads/products/1791800925230_tr__xanh_nh_i.jpg",
+                "/uploads/products/1791801032667_tr__s_a_chocolate.jpg",
+                "/uploads/products/1791801150199_tr__chanh.jpg",
+                "/uploads/products/1791801263201_tr__b___ao.jpg",
+                "/uploads/products/1791801449909_olong_latte_v_i.jpg"
+        };
+
+        // 5. Khoi tao cua hang va san pham
+        for (int branch = 1; branch <= 2; branch++) {
+
+            Account owner = account(
+                    "shop" + branch + "@utetra.vn",
+                    "VENDOR"
+            );
+
+            Shop s = shops.findByOwner(owner).orElse(null);
+
+            if (s == null) {
+
+                s = Shop.builder()
+                        .owner(owner)
+                        .manager(branch == 1 ? manager : null)
+                        .shopName(
+                                "UTETra — " +
+                                (branch == 1 ? "Thủ Đức" : "Bình Thạnh")
+                        )
+                        .status("ACTIVE")
+                        .rating(BigDecimal.ZERO)
+                        .commissionPercent(new BigDecimal("5"))
+                        .logoUrl("/images/tea-placeholder.svg")
+                        .build();
+
+                shops.save(s);
+            }
+
+            if (products.findByShopOrderByCreatedAtDesc(s).isEmpty()) {
+
+                String[] names = {
+                        "Trà sữa trân châu",
+                        "Trà đào cam sả",
+                        "Ô long sữa",
+                        "Trà lài",
+                        "Sữa tươi đường đen",
+                        "Trà vải",
+                        "Trà sữa khoai môn",
+                        "Trà dâu",
+                        "Trà matcha",
+                        "Trà nhãn"
+                };
+
+                for (int i = 0; i < 24; i++) {
+
+                    Product p = Product.builder()
+                            .shop(s)
+                            .category(cs.get(i % cs.size()))
+                            .name(
+                                    names[i % names.length] +
+                                    (i >= 10
+                                            ? " đặc biệt " + (i / 10)
+                                            : "")
+                            )
+                            .basePrice(
+                                    BigDecimal.valueOf(
+                                            25000 + (i % 6) * 5000
+                                    )
+                            )
+                            .stock(100)
+                            .soldCount(12 + i)
+                            .description(
+                                    "Đồ uống mẫu phục vụ kiểm thử. " +
+                                    "Giá cơ bản áp dụng size M."
+                            )
+                            .imageUrl(
+                                    photos.length == 0
+                                            ? "/images/tea-placeholder.svg"
+                                            : photos[i % photos.length]
+                            )
+                            .status("ACTIVE")
+                            .build();
+
+                    products.save(p);
+                }
+            }
         }
 
-        // 4. BẬT LẠI: TẠO CÁC MÃ KHUYẾN MÃI MẪU
-        if (promotionRepository.count() == 0) {
-            promotionRepository.save(new Promotion(
+        // 6. Khoi tao ma khuyen mai
+        if (promotions.count() == 0) {
+
+            Promotion discount = new Promotion(
                     "UTETRA10",
                     10,
                     new BigDecimal("20000"),
                     new BigDecimal("50000"),
                     true
-            ));
+            );
 
-            promotionRepository.save(new Promotion(
+            promotions.save(discount);
+
+            Promotion freeship = new Promotion(
                     "FREESHIP",
                     100,
                     new BigDecimal("15000"),
                     new BigDecimal("60000"),
                     true
-            ));
-        }
+            );
 
-        // 5. NẠP DỮ LIỆU DANH MỤC, SHOP VÀ MÓN TRÀ SỮA MẪU
-        if (categoryRepository.count() == 0) {
-            Category c1 = categoryRepository.save(Category.builder().name("Trà Sữa Truyền Thống").imageUrl("https://images.unsplash.com/photo-1558857563-b37cf5ef7b98?w=300").build());
-            Category c2 = categoryRepository.save(Category.builder().name("Trà Trái Cây Tươi").imageUrl("https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=300").build());
-            Category c3 = categoryRepository.save(Category.builder().name("Trà Ô Long & Macchiato").imageUrl("https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=300").build());
+            freeship.setType("SHIPPING");
 
-            Account vendorAcc = accountRepository.findByEmail("shop1@utetra.vn").orElseGet(() -> {
-                return accountRepository.save(Account.builder()
-                        .email("shop1@utetra.vn")
-                        .password(passwordEncoder.encode("123456"))
-                        .role("VENDOR")
-                        .isActive(true)
-                        .build());
-            });
-
-            Shop shop1 = shopRepository.save(Shop.builder()
-                    .owner(vendorAcc)
-                    .shopName("Trà Sữa Đô Đô - Chi nhánh Thủ Đức")
-                    .description("Thế giới trà sữa đồng giá siêu thơm ngon")
-                    .logoUrl("https://images.unsplash.com/photo-1541658016709-82535e94bc69?w=150")
-                    .status("ACTIVE")
-                    .rating(BigDecimal.valueOf(4.9))
-                    .build());
-
-            String[] names = {
-                "Trà Sữa Nướng Trân Châu Đen", "Trà Đào Cam Sả Tươi", "Ô Long Sữa Thiết Quan Âm",
-                "Hồng Trà Sữa Macchiato", "Trà Xanh Nhài Kem Cheese", "Trà Sữa Thái Xanh Thạch",
-                "Trà Chanh Dây Kim Quất", "Trà Sữa Khoai Môn Hoàng Kim"
-            };
-            BigDecimal[] prices = {
-                new BigDecimal("28000"), new BigDecimal("32000"), new BigDecimal("35000"),
-                new BigDecimal("30000"), new BigDecimal("38000"), new BigDecimal("25000"),
-                new BigDecimal("29000"), new BigDecimal("35000")
-            };
-            String[] imgs = {
-                "https://images.unsplash.com/photo-1558857563-b37cf5ef7b98?w=500",
-                "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=500",
-                "https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=500",
-                "https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=500",
-                "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=500",
-                "https://images.unsplash.com/photo-1563227812-0ea4c22e6cc8?w=500",
-                "https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=500",
-                "https://images.unsplash.com/photo-1595981267035-7b04ca84a82d?w=500"
-            };
-
-            for (int i = 0; i < names.length; i++) {
-                productRepository.save(Product.builder()
-                        .shop(shop1)
-                        .category(i % 3 == 0 ? c1 : (i % 3 == 1 ? c2 : c3))
-                        .name(names[i])
-                        .description("Ly trà sữa thơm ngậy đượm vị lá trà cao nguyên, topping đầy đặn.")
-                        .basePrice(prices[i])
-                        .stock(100)
-                        .imageUrl(imgs[i])
-                        .status("ACTIVE")
-                        .soldCount(15 + i * 8)
-                        .build());
-            }
+            promotions.save(freeship);
         }
     }
 }

@@ -35,7 +35,7 @@
         }
     </style>
 </head>
-<body>
+<body th:attr="data-signed-in=${#authorization.expression('isAuthenticated()') ? 'true' : null}">
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-12 col-md-6 col-lg-4">
@@ -67,5 +67,5 @@
         </div>
     </div>
 </div>
-</body>
+<div class="container text-center mb-4"><form th:action="@{/register/resend}" method="post" ><input type="hidden" name="email" th:value="${email}"><button class="btn btn-outline-success">Gửi lại OTP (sau 60 giây)</button></form></div><script src="/js/live-orders.js"></script></body>
 </html>

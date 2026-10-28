@@ -17,6 +17,7 @@ public class Carrier {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+    @ManyToOne private Shop shop;
 
     // Map cột name
     @Column(name = "name", length = 100)

@@ -16,9 +16,15 @@ public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+    @Builder.Default private Boolean emailVerified = false;
+    private String otpPurpose;
+    @Builder.Default private Integer otpAttempts = 0;
+    private LocalDateTime otpSentAt;
 
     @Column(nullable = false, unique = true, length = 100)
     private String email;
+    @Column(length=100) private String fullName;
+    @Column(length=20) private String phone;
 
     @Column(nullable = false, length = 255)
     private String password;

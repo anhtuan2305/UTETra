@@ -17,6 +17,8 @@ public class Shop {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+    @ManyToOne private Account manager;
+    @Builder.Default private BigDecimal commissionPercent = BigDecimal.ZERO;
 
     // Mỗi shop thuộc về 1 tài khoản Vendor
     @OneToOne
@@ -26,7 +28,7 @@ public class Shop {
     @Column(name = "shop_name", nullable = false, length = 150)
     private String shopName;
 
-    @Column(columnDefinition = "NVARCHAR(MAX)")
+    @Column(length = 4000)
     private String description;
 
     @Column(name = "logo_url")

@@ -57,7 +57,7 @@
         }
     </style>
 </head>
-<body>
+<body th:attr="data-signed-in=${#authorization.expression('isAuthenticated()') ? 'true' : null}">
 
     <!-- Header Fragment -->
     <div th:replace="~{fragments/header :: header}"></div>
@@ -135,7 +135,7 @@
 
                                     <!-- Cột giá tiền -->
                                     <td class="text-end fw-bold text-danger fs-6" 
-                                        th:text="${#numbers.formatDecimal(item.product.basePrice * item.quantity, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                                        th:text="${#numbers.formatDecimal(item.unitPrice * item.quantity, 0, 'COMMA', 0, 'POINT')} + ' đ'">
                                         30.000 đ
                                     </td>
 
@@ -196,5 +196,5 @@
     <div th:replace="~{fragments/footer :: footer}"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+<script src="/js/live-orders.js"></script></body>
 </html>

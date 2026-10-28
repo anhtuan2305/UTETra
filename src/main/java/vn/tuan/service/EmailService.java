@@ -1,28 +1,6 @@
 package vn.tuan.service;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
-
-@Service
-public class EmailService {
-
-    @Autowired
-    private JavaMailSender mailSender;
-
-    @Async // Gửi mail chạy ngầm ở luồng riêng, không làm đứng giao diện web
-    public void sendOtpEmail(String toEmail, String otp) {
-        try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(toEmail);
-            message.setSubject("Mã xác thực tài khoản UTETra");
-            message.setText("Xin chào,\n\nMã OTP kích hoạt tài khoản UTETra của bạn là: " + otp 
-                    + "\nMã có hiệu lực trong vòng 5 phút. Vui lòng không chia sẻ mã này cho ai.");
-            mailSender.send(message);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+import lombok.RequiredArgsConstructor; import org.springframework.stereotype.Service;import org.springframework.beans.factory.annotation.Value;import org.springframework.mail.*;import org.springframework.mail.javamail.JavaMailSender;
+@Service @RequiredArgsConstructor public class EmailService {
+ private final JavaMailSender mail; @Value("${spring.mail.username:}") private String from; @Value("${app.mail.enabled:false}") private boolean enabled; @Value("${app.mail.demo:false}")private boolean demo;
+ public void sendOtpEmail(String email,String otp){if(!enabled){if(demo){System.out.println("[DEMO OTP] "+email+": "+otp);return;}throw new IllegalArgumentException("Chưa cấu hình SMTP. Hãy liên hệ quản trị viên.");}SimpleMailMessage m=new SimpleMailMessage();m.setFrom(from);m.setTo(email);m.setSubject("UTETra - Mã xác thực");m.setText("Mã xác thực của bạn: "+otp+". Có hiệu lực 5 phút. Không chia sẻ cho người khác.");try{mail.send(m);}catch(MailException e){throw new IllegalArgumentException("Không gửi được email. Vui lòng thử lại hoặc kiểm tra cấu hình SMTP.");}}
 }

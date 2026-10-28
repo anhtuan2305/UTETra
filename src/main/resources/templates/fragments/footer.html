@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
 </head>
-<body>
+<body th:attr="data-signed-in=${#authorization.expression('isAuthenticated()') ? 'true' : null}">
 <footer th:fragment="footer" class="text-white pt-5 pb-3" style="background-color: #0a2d58;">
     <div class="container">
         <div class="row g-4 pb-4 border-bottom border-secondary">
@@ -44,5 +44,5 @@
         </div>
     </div>
 </footer>
-</body>
+<script src="/js/live-orders.js"></script></body>
 </html>

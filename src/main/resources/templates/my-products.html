@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Yêu thích &amp; sản phẩm đã xem | UTETra</title>
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap">
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            color: #263449;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #0d2847;
+            background-image: url('/images/wave-bg.png');
+            background-repeat: repeat-y;
+            background-position: center top;
+            background-size: 100% auto;
+        }
+
+        .collection-hero {
+            background: #fff;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .2);
+        }
+
+        .collection-title {
+            color: #004ea2;
+            font-weight: 800;
+            font-size: clamp(1.5rem, 3vw, 2.2rem);
+        }
+
+        .collection-eyebrow {
+            color: #d8232a;
+            font-size: .8rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .collection-shortcut {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 30px;
+            border: 1px solid #d5e4fa;
+            color: #004ea2;
+            background: #edf4ff;
+            text-decoration: none;
+            font-size: .9rem;
+            font-weight: 700;
+        }
+
+        .collection-shortcut:hover {
+            background: #dceaff;
+            color: #003b7c;
+        }
+
+        .collection-section {
+            background: #fff;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .2);
+            scroll-margin-top: 180px;
+        }
+
+        .section-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            flex-shrink: 0;
+            font-size: 1.35rem;
+        }
+
+        .favorite-icon {
+            color: #d8232a;
+            background: #fff0f1;
+        }
+
+        .history-icon {
+            color: #004ea2;
+            background: #edf4ff;
+        }
+
+        .section-title {
+            color: #004ea2;
+            font-size: 1.4rem;
+            font-weight: 800;
+        }
+
+        .product-card {
+            height: 100%;
+            background: #fff;
+            border: 1px solid #e3eaf3;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 40, 90, .12);
+        }
+
+        .product-image-link {
+            display: block;
+            position: relative;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+            background: #f7f8fa;
+        }
+
+        .product-image-link img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform .25s ease;
+        }
+
+        .product-card:hover .product-image-link img {
+            transform: scale(1.04);
+        }
+
+        .favorite-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #fff;
+            color: #d8232a;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, .12);
+        }
+
+        .product-name {
+            color: #004ea2;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 700;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
+        .product-name:hover {
+            color: #d8232a;
+        }
+
+        .product-shop {
+            font-size: .78rem;
+            color: #6c757d;
+        }
+
+        .product-price {
+            color: #d8232a;
+            font-weight: 800;
+            font-size: 1.15rem;
+        }
+
+        .viewed-time {
+            color: #6c757d;
+            font-size: .75rem;
+            line-height: 1.6;
+        }
+
+        .view-button {
+            background: #004ea2;
+            border-color: #004ea2;
+            color: #fff;
+            font-size: .85rem;
+            font-weight: 700;
+            border-radius: 24px;
+            padding: 9px 14px;
+        }
+
+        .view-button:hover {
+            background: #003b7c;
+            border-color: #003b7c;
+            color: #fff;
+        }
+
+        .remove-button {
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #f2c5ca;
+            border-radius: 50%;
+            color: #d8232a;
+            background: #fff5f6;
+        }
+
+        .remove-button:hover {
+            color: #fff;
+            background: #d8232a;
+            border-color: #d8232a;
+        }
+
+        .empty-state {
+            background: #f8faff;
+            border: 1px dashed #cbdcf3;
+            border-radius: 16px;
+            padding: 2.5rem 1rem;
+            text-align: center;
+        }
+
+        .empty-state > i {
+            color: #87a7d3;
+            font-size: 2.8rem;
+        }
+
+        @media (max-width: 575.98px) {
+            .collection-hero,
+            .collection-section {
+                padding: 1.25rem;
+                border-radius: 16px;
+            }
+
+            .section-title {
+                font-size: 1.15rem;
+            }
+
+            .product-name {
+                font-size: .9rem;
+            }
+
+            .product-price {
+                font-size: 1rem;
+            }
+
+            .view-button {
+                padding: 9px 10px;
+                font-size: .8rem;
+            }
+        }
+    </style>
+</head>
+
+<body th:attr="data-signed-in=${#authorization.expression('isAuthenticated()') ? 'true' : null}">
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="container py-4 py-lg-5"
+      th:with="favorites=${activities == null ? null : activities.?[favorite == true]},
+               viewed=${activities == null ? null : activities.?[viewedAt != null]}">
+
+    <!-- Giới thiệu -->
+    <section class="collection-hero mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <div class="collection-eyebrow mb-2">
+                    Góc riêng của bạn
+                </div>
+
+                <h1 class="collection-title mb-2">
+                    Yêu thích &amp; đã xem
+                </h1>
+
+                <p class="text-secondary mb-0">
+                    Lưu món hợp gu, tìm lại hương vị bạn vừa khám phá.
+                </p>
+            </div>
+
+            <a th:href="@{/#productList}"
+               class="btn btn-outline-primary rounded-pill px-4 fw-semibold">
+                <i class="bi bi-arrow-left me-1"></i>
+                Khám phá thực đơn
+            </a>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2 mt-4">
+            <a href="#favoritesSection" class="collection-shortcut">
+                <i class="bi bi-heart-fill text-danger"></i>
+                Món yêu thích
+                <span class="badge bg-white text-primary rounded-pill"
+                      th:text="${favorites == null ? 0 : #lists.size(favorites)}">
+                    0
+                </span>
+            </a>
+
+            <a href="#recentSection" class="collection-shortcut">
+                <i class="bi bi-clock-history"></i>
+                Đã xem gần đây
+                <span class="badge bg-white text-primary rounded-pill"
+                      th:text="${viewed == null ? 0 : #lists.size(viewed)}">
+                    0
+                </span>
+            </a>
+        </div>
+    </section>
+
+    <!-- Món yêu thích -->
+    <section id="favoritesSection" class="collection-section mb-4">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <span class="section-icon favorite-icon">
+                <i class="bi bi-heart-fill"></i>
+            </span>
+            <div>
+                <h2 class="section-title mb-1">Món yêu thích</h2>
+                <p class="text-secondary small mb-0">
+                    Những hương vị bạn muốn thưởng thức lần nữa.
+                </p>
+            </div>
+        </div>
+
+        <div class="empty-state" th:if="${#lists.isEmpty(favorites)}">
+            <i class="bi bi-heart"></i>
+            <h5 class="fw-bold mt-3">Bạn chưa lưu món yêu thích</h5>
+            <p class="text-secondary">
+                Mở chi tiết món và bấm Thích để lưu vào đây nhé.
+            </p>
+            <a th:href="@{/#productList}" class="btn view-button px-4">
+                Khám phá món ngon
+            </a>
+        </div>
+
+        <div class="row g-3 g-lg-4"
+             th:if="${not #lists.isEmpty(favorites)}">
+            <div class="col-12 col-sm-6 col-lg-3"
+                 th:each="a : ${favorites}">
+                <article class="product-card d-flex flex-column">
+
+                    <a th:href="@{/products/{id}(id=${a.product.id})}"
+                       class="product-image-link">
+                        <img th:src="${a.product.imageUrl != null and !#strings.isEmpty(a.product.imageUrl)
+                            ? (a.product.imageUrl.startsWith('http') or a.product.imageUrl.startsWith('/')
+                                ? a.product.imageUrl : '/' + a.product.imageUrl)
+                            : 'https://placehold.co/400x400?text=UTETra'}"
+                             th:alt="${a.product.name}"
+                             loading="lazy"
+                             onerror="this.onerror=null; this.src='https://placehold.co/400x400?text=UTETra';">
+
+                        <span class="favorite-badge" aria-hidden="true">
+                            <i class="bi bi-heart-fill"></i>
+                        </span>
+                    </a>
+
+                    <div class="p-3 d-flex flex-column flex-grow-1">
+                        <div class="product-shop mb-2"
+                             th:if="${a.product.shop != null}">
+                            <i class="bi bi-shop me-1"></i>
+                            <span th:text="${a.product.shop.shopName}"></span>
+                        </div>
+
+                        <a th:href="@{/products/{id}(id=${a.product.id})}"
+                           class="product-name mb-2"
+                           th:text="${a.product.name}">
+                            Tên món
+                        </a>
+
+                        <div class="product-price mt-auto mb-3"
+                             th:text="${a.product.basePrice != null
+                                 ? #numbers.formatDecimal(a.product.basePrice, 0, 'COMMA', 0, 'POINT') + ' đ'
+                                 : 'Chưa cập nhật giá'}">
+                            39.000 đ
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2">
+                            <a th:href="@{/products/{id}(id=${a.product.id})}"
+                               class="btn view-button flex-grow-1">
+                                Xem món
+                                <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+
+                            <form th:action="@{/favorite/{id}(id=${a.product.id})}"
+                                  method="post"
+                                  class="m-0">
+                                <button type="submit"
+                                        class="remove-button"
+                                        title="Bỏ thích món"
+                                        aria-label="Bỏ thích món">
+                                    <i class="bi bi-heartbreak"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Đã xem -->
+    <section id="recentSection" class="collection-section mb-4">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <span class="section-icon history-icon">
+                <i class="bi bi-clock-history"></i>
+            </span>
+            <div>
+                <h2 class="section-title mb-1">Đã xem gần đây</h2>
+                <p class="text-secondary small mb-0">
+                    Tiếp tục khám phá những món bạn vừa ghé xem.
+                </p>
+            </div>
+        </div>
+
+        <div class="empty-state" th:if="${#lists.isEmpty(viewed)}">
+            <i class="bi bi-clock-history"></i>
+            <h5 class="fw-bold mt-3">Chưa có món đã xem</h5>
+            <p class="text-secondary">
+                Các món bạn mở xem sẽ xuất hiện tại đây.
+            </p>
+            <a th:href="@{/#productList}" class="btn view-button px-4">
+                Xem thực đơn
+            </a>
+        </div>
+
+        <div class="row g-3 g-lg-4"
+             th:if="${not #lists.isEmpty(viewed)}">
+            <div class="col-12 col-sm-6 col-lg-3"
+                 th:each="a : ${viewed}">
+                <article class="product-card d-flex flex-column">
+
+                    <a th:href="@{/products/{id}(id=${a.product.id})}"
+                       class="product-image-link">
+                        <img th:src="${a.product.imageUrl != null and !#strings.isEmpty(a.product.imageUrl)
+                            ? (a.product.imageUrl.startsWith('http') or a.product.imageUrl.startsWith('/')
+                                ? a.product.imageUrl : '/' + a.product.imageUrl)
+                            : 'https://placehold.co/400x400?text=UTETra'}"
+                             th:alt="${a.product.name}"
+                             loading="lazy"
+                             onerror="this.onerror=null; this.src='https://placehold.co/400x400?text=UTETra';">
+                    </a>
+
+                    <div class="p-3 d-flex flex-column flex-grow-1">
+                        <div class="product-shop mb-2"
+                             th:if="${a.product.shop != null}">
+                            <i class="bi bi-shop me-1"></i>
+                            <span th:text="${a.product.shop.shopName}"></span>
+                        </div>
+
+                        <a th:href="@{/products/{id}(id=${a.product.id})}"
+                           class="product-name mb-2"
+                           th:text="${a.product.name}">
+                            Tên món
+                        </a>
+
+                        <div class="product-price mt-auto mb-2"
+                             th:text="${a.product.basePrice != null
+                                 ? #numbers.formatDecimal(a.product.basePrice, 0, 'COMMA', 0, 'POINT') + ' đ'
+                                 : 'Chưa cập nhật giá'}">
+                            39.000 đ
+                        </div>
+
+                        <div class="viewed-time mb-3">
+                            <i class="bi bi-clock me-1"></i>
+                            Đã xem:
+                            <span th:text="${#temporals.format(a.viewedAt, 'dd/MM/yyyy HH:mm')}">
+                                28/10/2026 16:20
+                            </span>
+                        </div>
+
+                        <a th:href="@{/products/{id}(id=${a.product.id})}"
+                           class="btn view-button w-100">
+                            Xem lại món
+                            <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/live-orders.js"></script>
+
+</body>
+</html>

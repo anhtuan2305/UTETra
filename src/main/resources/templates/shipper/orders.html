@@ -1,102 +1,391 @@
+
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Cổng Giao Hàng - Shipper UTETra</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap"
+          rel="stylesheet">
+
     <style>
-        body { font-family: 'Montserrat', sans-serif; background-color: #f4f7f6; min-height: 100vh; }
-        .shipper-card { border-radius: 16px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f4f7f6;
+            min-height: 100vh;
+        }
+
+        .shipper-card {
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .order-info {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .status-badge {
+            font-size: 12px;
+            padding: 8px 12px;
+            border-radius: 20px;
+        }
+
+        .action-button {
+            font-weight: 700;
+            padding: 12px;
+            border-radius: 25px;
+        }
     </style>
 </head>
-<body>
 
+<body th:attr="data-signed-in=${#authorization.expression('isAuthenticated()') ? 'true' : null}">
+
+    <!-- HEADER -->
     <div th:replace="~{fragments/header :: header}"></div>
 
     <div class="container my-5">
+
+        <!-- TIÊU ĐỀ -->
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+
             <div>
-                <h3 class="fw-bold mb-1 text-primary"><i class="bi bi-bicycle me-2"></i>TRUNG TÂM ĐIỀU PHỐI GIAO HÀNG</h3>
-                <p class="text-muted small mb-0">Quản lý nhận đơn và cập nhật hành trình giao ly trà sữa đến tay khách hàng</p>
+                <h3 class="fw-bold mb-1 text-primary">
+                    <i class="bi bi-bicycle me-2"></i>
+                    TRUNG TÂM ĐIỀU PHỐI GIAO HÀNG
+                </h3>
+
+                <p class="text-muted small mb-0">
+                    Quản lý nhận đơn và cập nhật hành trình giao trà sữa đến tay khách hàng
+                </p>
             </div>
-            <a th:href="@{/shipper/orders}" class="btn btn-outline-primary rounded-pill px-3 fw-bold">
-                <i class="bi bi-arrow-clockwise me-1"></i> Làm mới đơn
+
+            <a th:href="@{/shipper/orders}"
+               class="btn btn-outline-primary rounded-pill px-3 fw-bold">
+
+                <i class="bi bi-arrow-clockwise me-1"></i>
+                Làm mới đơn
             </a>
         </div>
 
-        <div th:if="${message}" class="alert alert-success py-2 small" th:text="${message}"></div>
+        <!-- THÔNG BÁO -->
+        <div th:if="${message}"
+             class="alert alert-success"
+             th:text="${message}">
+        </div>
 
+        <!-- THỐNG KÊ -->
+        <div class="card shipper-card mb-4">
+            <div class="card-body">
+
+                <div class="d-flex align-items-center gap-3">
+
+                    <i class="bi bi-check-circle-fill text-success fs-3"></i>
+
+                    <div>
+                        <div class="text-muted small">
+                            Tổng số đơn đã giao thành công
+                        </div>
+
+                        <h4 class="fw-bold mb-0"
+                            th:text="${completedCount}">
+                            0
+                        </h4>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- DANH SÁCH ĐƠN HÀNG -->
         <div class="row g-3">
+
+            <!-- KHÔNG CÓ ĐƠN -->
             <div class="col-12" th:if="${#lists.isEmpty(orders)}">
+
                 <div class="text-center py-5 bg-white rounded-4 shadow-sm">
+
                     <i class="bi bi-box2 text-muted fs-1 mb-2 d-block"></i>
-                    <p class="text-muted fw-bold">Hiện chưa có đơn hàng nào cần giao.</p>
+
+                    <p class="text-muted fw-bold">
+                        Hiện chưa có đơn hàng nào cần giao.
+                    </p>
+
                 </div>
             </div>
 
-            <!-- Danh sách card đơn hàng giao nhận -->
-            <div class="col-12 col-lg-6" th:each="order : ${orders}">
-                <div class="card shipper-card p-4 bg-white">
+            <!-- CARD ĐƠN HÀNG -->
+            <div class="col-12 col-lg-6"
+                 th:each="order : ${orders}">
+
+                <div class="card shipper-card p-4 bg-white h-100">
+
+                    <!-- MÃ ĐƠN VÀ TRẠNG THÁI -->
                     <div class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-3">
-                        <div>
-                            <span class="badge bg-primary fs-6 mb-1">Đơn #[[${order.id}]]</span>
-                            <div class="small text-muted" th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">Thời gian</div>
-                        </div>
-                        <div>
-                            <span th:if="${order.status == 'PREPARING'}" class="badge bg-warning text-dark">Quán đã xong (Sẵn sàng)</span>
-                            <span th:if="${order.status == 'SHIPPING'}" class="badge bg-info text-dark">Đang trên đường giao</span>
-                            <span th:if="${order.status == 'COMPLETED'}" class="badge bg-success">Giao thành công</span>
-                        </div>
-                    </div>
 
-                    <div class="mb-3">
-                        <div class="small text-secondary fw-bold text-uppercase mb-1">Địa điểm giao tới:</div>
-                        <h6 class="fw-bold text-dark mb-1" th:text="${order.address.receiverName} + ' - ' + ${order.address.phone}">Nguyễn Văn A</h6>
-                        <div class="small text-muted" th:text="${order.address.streetAddress} + ', ' + ${order.address.city}">Địa chỉ chi tiết</div>
-                    </div>
-
-                    <div class="d-flex justify-content-between align-items-center p-3 rounded-3 bg-light mb-3">
                         <div>
-                            <span class="small text-muted d-block">Hình thức & Thu hộ:</span>
-                            <strong th:text="${order.paymentMethod}">COD</strong>
+                            <span class="badge bg-primary fs-6 mb-1"
+                                  th:text="${'Đơn #' + order.id}">
+                                Đơn #1
+                            </span>
+
+                            <div class="small text-muted"
+                                 th:if="${order.createdAt != null}"
+                                 th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">
+                            </div>
                         </div>
+
                         <div class="text-end">
-                            <span class="small text-muted d-block">Tổng thu khách:</span>
-                            <span class="fw-bold fs-5 text-danger" th:text="${#numbers.formatDecimal(order.finalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">45.000 đ</span>
+
+                            <span th:if="${order.status == 'READY'}"
+                                  class="badge bg-warning text-dark status-badge">
+                                Sẵn sàng giao
+                            </span>
+
+                            <span th:if="${order.status == 'SHIPPING'}"
+                                  class="badge bg-info text-dark status-badge">
+                                Đang giao hàng
+                            </span>
+
+                            <span th:if="${order.status == 'COMPLETED'}"
+                                  class="badge bg-success status-badge">
+                                Giao thành công
+                            </span>
+
                         </div>
                     </div>
 
-                    <!-- Nút thao tác chuyển trạng thái cho Shipper -->
-                    <div class="d-flex gap-2">
-                        <!-- Nút Nhận giao nếu quán đã làm xong -->
-                        <form th:if="${order.status == 'PREPARING'}" th:action="@{/shipper/orders/update-status}" method="post" class="flex-grow-1 m-0">
-                            <input type="hidden" name="orderId" th:value="${order.id}">
-                            <input type="hidden" name="status" value="SHIPPING">
-                            <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold">
-                                <i class="bi bi-box-seam me-1"></i> Nhận Đi Giao
+                    <!-- THÔNG TIN NGƯỜI NHẬN -->
+                    <div class="mb-3">
+
+                        <div class="small text-secondary fw-bold text-uppercase mb-2">
+                            <i class="bi bi-geo-alt-fill me-1"></i>
+                            THÔNG TIN GIAO HÀNG
+                        </div>
+
+                        <!-- KHÁCH VÃNG LAI -->
+                        <div th:if="${order.address == null}">
+
+                            <h6 class="fw-bold text-dark mb-2">
+
+                                <i class="bi bi-person-fill me-1"></i>
+
+                                <span th:text="${order.guestName != null ? order.guestName : 'Khách hàng'}">
+                                    Khách hàng
+                                </span>
+                            </h6>
+
+                            <p class="small mb-2">
+
+                                <i class="bi bi-telephone-fill me-1"></i>
+
+                                <span th:text="${order.guestPhone != null ? order.guestPhone : 'Chưa có số điện thoại'}">
+                                </span>
+                            </p>
+
+                            <p class="small text-muted mb-0">
+
+                                <i class="bi bi-geo-alt me-1"></i>
+
+                                <span th:text="${order.guestAddress != null ? order.guestAddress : 'Chưa có địa chỉ giao hàng'}">
+                                </span>
+                            </p>
+
+                        </div>
+
+                        <!-- KHÁCH CÓ ĐỊA CHỈ ĐÃ LƯU -->
+                        <div th:if="${order.address != null}">
+
+                            <h6 class="fw-bold text-dark mb-2">
+
+                                <i class="bi bi-person-fill me-1"></i>
+
+                                <span th:text="${order.address.receiverName}">
+                                </span>
+                            </h6>
+
+                            <p class="small mb-2">
+
+                                <i class="bi bi-telephone-fill me-1"></i>
+
+                                <span th:text="${order.address.phone}">
+                                </span>
+                            </p>
+
+                            <p class="small text-muted mb-0">
+
+                                <i class="bi bi-geo-alt me-1"></i>
+
+                                <span th:text="${order.address.streetAddress + ', ' + order.address.city}">
+                                </span>
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <!-- GHI CHÚ -->
+                    <div th:if="${order.note != null and !#strings.isEmpty(order.note)}"
+                         class="alert alert-light border small">
+
+                        <strong>Ghi chú khách hàng:</strong>
+
+                        <span th:text="${order.note}"></span>
+
+                    </div>
+
+                    <!-- THANH TOÁN -->
+                    <div class="order-info mb-3">
+
+                        <div class="d-flex justify-content-between align-items-center">
+
+                            <div>
+                                <span class="small text-muted d-block">
+                                    Phương thức thanh toán
+                                </span>
+
+                                <strong th:if="${order.paymentMethod == 'COD'}">
+                                    Tiền mặt khi nhận hàng
+                                </strong>
+
+                                <strong th:if="${order.paymentMethod == 'VNPAY'}">
+                                    VNPay
+                                </strong>
+
+                                <strong th:if="${order.paymentMethod != 'COD' and order.paymentMethod != 'VNPAY'}"
+                                        th:text="${order.paymentMethod}">
+                                </strong>
+                            </div>
+
+                            <div class="text-end">
+
+                                <span class="small text-muted d-block">
+                                    Tổng giá trị đơn
+                                </span>
+
+                                <span class="fw-bold fs-5 text-danger"
+                                      th:text="${#numbers.formatDecimal(order.finalAmount, 1, 'POINT', 0, 'COMMA') + ' đ'}">
+                                </span>
+
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="small">
+
+                            <strong>Trạng thái thanh toán:</strong>
+
+                            <span th:if="${order.paymentStatus == 'UNPAID'}"
+                                  class="text-danger fw-bold">
+                                Chưa thanh toán
+                            </span>
+
+                            <span th:if="${order.paymentStatus == 'PAID'}"
+                                  class="text-success fw-bold">
+                                Đã thanh toán
+                            </span>
+
+                            <span th:if="${order.paymentStatus == 'REFUND_PENDING'}"
+                                  class="text-warning fw-bold">
+                                Chờ hoàn tiền
+                            </span>
+
+                            <span th:if="${order.paymentStatus == 'REFUNDED'}"
+                                  class="text-secondary fw-bold">
+                                Đã hoàn tiền
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <!-- NÚT THAO TÁC -->
+                    <div class="d-flex gap-2 mt-auto">
+
+                        <!-- NHẬN ĐƠN -->
+                        <form th:if="${order.status == 'READY'}"
+                              th:action="@{/shipper/orders/update-status}"
+                              method="post"
+                              class="flex-grow-1 m-0">
+
+                            <input type="hidden"
+                                   name="orderId"
+                                   th:value="${order.id}">
+
+                            <input type="hidden"
+                                   name="status"
+                                   value="SHIPPING">
+
+                            <button type="submit"
+                                    class="btn btn-primary w-100 action-button"
+                                    onclick="return confirm('Bạn xác nhận nhận giao đơn hàng này?')">
+
+                                <i class="bi bi-box-seam me-1"></i>
+                                Nhận đơn giao hàng
                             </button>
+
                         </form>
 
-                        <!-- Nút Giao thành công nếu đang đi giao -->
-                        <form th:if="${order.status == 'SHIPPING'}" th:action="@{/shipper/orders/update-status}" method="post" class="flex-grow-1 m-0">
-                            <input type="hidden" name="orderId" th:value="${order.id}">
-                            <input type="hidden" name="status" value="COMPLETED">
-                            <button type="submit" class="btn btn-success w-100 rounded-pill fw-bold">
-                                <i class="bi bi-check2-circle me-1"></i> Đã Giao Thành Công
+                        <!-- GIAO THÀNH CÔNG -->
+                        <form th:if="${order.status == 'SHIPPING'}"
+                              th:action="@{/shipper/orders/update-status}"
+                              method="post"
+                              class="flex-grow-1 m-0">
+
+                            <input type="hidden"
+                                   name="orderId"
+                                   th:value="${order.id}">
+
+                            <input type="hidden"
+                                   name="status"
+                                   value="COMPLETED">
+
+                            <button type="submit"
+                                    class="btn btn-success w-100 action-button"
+                                    onclick="return confirm('Bạn xác nhận đã giao hàng thành công cho khách? Chỉ xác nhận khi đã giao hàng và thu tiền COD (nếu có).')">
+
+                                <i class="bi bi-check2-circle me-1"></i>
+                                Đã giao thành công
                             </button>
+
                         </form>
+
+                        <!-- ĐƠN HOÀN THÀNH -->
+                        <div th:if="${order.status == 'COMPLETED'}"
+                             class="alert alert-success w-100 mb-0 text-center">
+
+                            <i class="bi bi-check-circle-fill me-1"></i>
+                            Đơn hàng đã giao thành công
+
+                        </div>
+
                     </div>
 
                 </div>
             </div>
+
         </div>
 
     </div>
 
+    <!-- FOOTER -->
     <div th:replace="~{fragments/footer :: footer}"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="/js/live-orders.js"></script>
+
 </body>
 </html>

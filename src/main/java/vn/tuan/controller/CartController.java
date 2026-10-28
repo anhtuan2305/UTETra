@@ -24,7 +24,8 @@ public class CartController {
         if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
             return authentication.getName();
         }
-        return "GUEST_" + session.getId();
+        if(session.getAttribute("guestCartKey")==null)session.setAttribute("guestCartKey","GUEST_"+session.getId());
+        return session.getAttribute("guestCartKey").toString();
     }
 
     // Xem trang Giỏ hàng (Cho phép cả khách vãng lai)
@@ -37,7 +38,7 @@ public class CartController {
         BigDecimal totalAmount = BigDecimal.ZERO;
         if (cart != null && cart.getItems() != null) {
             for (var item : cart.getItems()) {
-                BigDecimal itemPrice = item.getProduct().getBasePrice()
+                BigDecimal itemPrice = item.getUnitPrice()
                         .multiply(BigDecimal.valueOf(item.getQuantity()));
                 totalAmount = totalAmount.add(itemPrice);
             }
@@ -69,15 +70,15 @@ public class CartController {
     // Tăng / giảm số lượng
     @PostMapping("/update-qty")
     public String updateQuantity(@RequestParam("itemId") Integer itemId,
-                                 @RequestParam("delta") Integer delta) {
-        cartService.updateQuantity(itemId, delta);
+                                 @RequestParam("delta") Integer delta, Authentication authentication, HttpSession session) {
+        cartService.updateQuantity(resolveUserIdentifier(authentication,session),itemId, delta);
         return "redirect:/cart";
     }
 
     // Xóa một món
     @PostMapping("/remove")
-    public String removeItem(@RequestParam("itemId") Integer itemId) {
-        cartService.removeItem(itemId);
+    public String removeItem(@RequestParam("itemId") Integer itemId, Authentication authentication, HttpSession session) {
+        cartService.removeItem(resolveUserIdentifier(authentication,session),itemId);
         return "redirect:/cart";
     }
 }

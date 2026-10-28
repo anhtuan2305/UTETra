@@ -8,7 +8,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import vn.tuan.dto.RegisterDTO;
 import vn.tuan.entity.Account;
-import vn.tuan.repository.AccountRepository;
+
 import vn.tuan.service.AccountService;
 
 @Controller
@@ -18,7 +18,10 @@ public class AuthController {
     private AccountService accountService;
 
     @Autowired
-    private AccountRepository accountRepository;
+    private vn.tuan.service.StorefrontService storefront;
+
+    @PostMapping("/register/resend")
+    public String resend(@RequestParam String email, Model model){model.addAttribute("email",email);model.addAttribute("successMessage",accountService.resendOtp(email));return "verify-otp";}
 
     @GetMapping("/login")
     public String showLoginForm() {
@@ -41,7 +44,7 @@ public class AuthController {
             model.addAttribute("errorMessage", result);
             return "register";
         }
-        return "redirect:/verify-otp?email=" + registerDTO.getEmail();
+        return "redirect:/verify-otp?email=" + java.net.URLEncoder.encode(registerDTO.getEmail(),java.nio.charset.StandardCharsets.UTF_8);
     }
 
     @GetMapping("/verify-otp")
@@ -54,7 +57,7 @@ public class AuthController {
     public String handleVerifyOtp(@RequestParam("email") String email,
                                   @RequestParam("otp") String otp, Model model) {
         if (accountService.verifyOtp(email, otp)) {
-            Account account = accountRepository.findByEmail(email).orElse(null);
+            Account account = storefront.account(email);
 
             // Phân nhánh thông báo: Shipper cần chờ Admin phê duyệt trước khi được đăng nhập
             if (account != null && "SHIPPER".equalsIgnoreCase(account.getRole())) {
@@ -82,7 +85,7 @@ public class AuthController {
     public String handleForgotPassword(@RequestParam("email") String email, Model model) {
         String result = accountService.processForgotPassword(email);
         if ("SUCCESS".equals(result)) {
-            return "redirect:/reset-password?email=" + email;
+            return "redirect:/reset-password?email=" + java.net.URLEncoder.encode(email,java.nio.charset.StandardCharsets.UTF_8);
         }
         model.addAttribute("errorMessage", result);
         return "forgot-password";

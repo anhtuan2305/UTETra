@@ -1,0 +1,204 @@
+
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Quản lý đơn hàng | UTETra</title>
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="/css/console.css">
+</head>
+
+<body th:attr="data-signed-in=${#authorization.expression('isAuthenticated()') ? 'true' : null}">
+
+<nav>
+    <a href="/">UTETra</a>
+    <a href="/console/dashboard">Tổng quan</a>
+    <a href="/console/products">Thực đơn</a>
+    <a href="/console/orders">Đơn hàng</a>
+    <a href="/console/promotions">Khuyến mãi</a>
+    <a href="/console/users">Khách hàng</a>
+    <a href="/console/settings">Cài đặt</a>
+
+    <a th:if="${role == 'ADMIN'}"
+       href="/admin/shops">Duyệt quán</a>
+
+    <a th:if="${role == 'ADMIN'}"
+       href="/admin/shippers">Duyệt Shipper</a>
+</nav>
+
+<main>
+
+    <h1>Quản lý đơn hàng</h1>
+
+    <!-- BỘ LỌC TRẠNG THÁI -->
+    <section>
+        <form method="get" action="/console/orders">
+
+            <label for="status">Lọc trạng thái</label>
+
+            <select id="status" name="status">
+                <option value="">Tất cả đơn hàng</option>
+                <option value="NEW">Chờ xác nhận</option>
+                <option value="CONFIRMED">Đã xác nhận</option>
+                <option value="PREPARING">Đang pha chế</option>
+                <option value="READY">Sẵn sàng giao</option>
+                <option value="SHIPPING">Đang giao hàng</option>
+                <option value="COMPLETED">Hoàn thành</option>
+                <option value="CANCELLED">Đã hủy</option>
+                <option value="RETURN_REQUESTED">Yêu cầu trả hàng</option>
+                <option value="RETURN_APPROVED">Đã duyệt trả hàng</option>
+                <option value="REFUNDED">Đã hoàn tiền</option>
+            </select>
+
+            <button type="submit">Lọc</button>
+        </form>
+    </section>
+
+    <!-- DANH SÁCH ĐƠN HÀNG -->
+    <section th:each="o : ${orders}">
+
+        <!-- TIÊU ĐỀ ĐƠN HÀNG -->
+        <h2>
+            Đơn #<span th:text="${o.id}"></span>
+            —
+
+            <span th:if="${o.status == 'NEW'}">Chờ xác nhận</span>
+            <span th:if="${o.status == 'CONFIRMED'}">Đã xác nhận</span>
+            <span th:if="${o.status == 'PREPARING'}">Đang pha chế</span>
+            <span th:if="${o.status == 'READY'}">Sẵn sàng giao</span>
+            <span th:if="${o.status == 'SHIPPING'}">Đang giao hàng</span>
+            <span th:if="${o.status == 'COMPLETED'}">Hoàn thành</span>
+            <span th:if="${o.status == 'CANCELLED'}">Đã hủy</span>
+            <span th:if="${o.status == 'RETURN_REQUESTED'}">Yêu cầu trả hàng</span>
+            <span th:if="${o.status == 'RETURN_APPROVED'}">Đã duyệt trả hàng</span>
+            <span th:if="${o.status == 'REFUNDED'}">Đã hoàn tiền</span>
+        </h2>
+
+        <!-- THÔNG TIN KHÁCH HÀNG -->
+        <p th:text="${o.shop.shopName + ' | ' + o.guestName + ' | ' + o.guestPhone}">
+        </p>
+
+        <p th:text="${o.guestAddress}"></p>
+
+        <p th:if="${o.note != null and !#strings.isEmpty(o.note)}"
+           th:text="${'Ghi chú: ' + o.note}">
+        </p>
+
+        <!-- LÝ DO TRẢ HÀNG -->
+        <p th:if="${o.returnReason != null}"
+           th:text="${'Lý do trả hàng: ' + o.returnReason}">
+        </p>
+
+        <!-- CHI TIẾT SẢN PHẨM -->
+        <ul>
+            <li th:each="d : ${o.orderDetails}"
+                th:text="${d.quantity + ' × ' + d.productName + ' — ' + d.optionsSnapshot}">
+            </li>
+        </ul>
+
+        <!-- THANH TOÁN -->
+        <p>
+            <strong>
+                Thanh toán:
+                <span th:text="${#numbers.formatDecimal(o.finalAmount, 1, 'POINT', 0, 'COMMA')}"></span>
+                đ
+                (
+                <span th:if="${o.paymentStatus == 'UNPAID'}">Chưa thanh toán</span>
+                <span th:if="${o.paymentStatus == 'PAID'}">Đã thanh toán</span>
+                <span th:if="${o.paymentStatus == 'REFUND_PENDING'}">Chờ hoàn tiền</span>
+                <span th:if="${o.paymentStatus == 'REFUNDED'}">Đã hoàn tiền</span>
+                )
+            </strong>
+        </p>
+
+        <!-- THÔNG TIN SHIPPER -->
+        <p th:if="${o.shipper != null}"
+           th:text="${'Người giao hàng: ' + o.shipper.email}">
+        </p>
+
+        <!-- CẬP NHẬT TRẠNG THÁI -->
+        <form th:action="@{/console/orders/{id}(id=${o.id})}"
+              method="post">
+
+            <button type="submit"
+                    th:if="${o.status == 'NEW'}"
+                    name="status"
+                    value="CONFIRMED">
+                Xác nhận
+            </button>
+
+            <button type="submit"
+                    th:if="${o.status == 'CONFIRMED'}"
+                    name="status"
+                    value="PREPARING">
+                Bắt đầu pha chế
+            </button>
+
+            <button type="submit"
+                    th:if="${o.status == 'PREPARING'}"
+                    name="status"
+                    value="READY">
+                Sẵn sàng giao
+            </button>
+
+            <button type="submit"
+                    th:if="${o.status == 'NEW' or o.status == 'CONFIRMED'}"
+                    name="status"
+                    value="CANCELLED"
+                    onclick="return confirm('Bạn có chắc muốn hủy đơn hàng này?')">
+                Hủy đơn hàng
+            </button>
+
+            <!-- XỬ LÝ TRẢ HÀNG -->
+            <button type="submit"
+                    th:if="${o.status == 'RETURN_REQUESTED'}"
+                    name="status"
+                    value="RETURN_APPROVED">
+                Chấp thuận trả hàng
+            </button>
+
+            <button type="submit"
+                    th:if="${o.status == 'RETURN_REQUESTED'}"
+                    name="status"
+                    value="COMPLETED">
+                Từ chối trả hàng
+            </button>
+
+            <button type="submit"
+                    th:if="${o.status == 'RETURN_APPROVED'}"
+                    name="status"
+                    value="REFUNDED"
+                    onclick="return confirm('Chỉ xác nhận sau khi đã nhận hàng và hoàn tiền thực tế cho khách. Tiếp tục?')">
+                Đã nhận hàng và hoàn tiền
+            </button>
+
+        </form>
+
+        <!-- XÁC NHẬN HOÀN TIỀN -->
+        <form th:if="${o.paymentStatus == 'REFUND_PENDING'}"
+              th:action="@{/console/refund/{id}(id=${o.id})}"
+              method="post">
+
+            <button type="submit"
+                    onclick="return confirm('Bạn xác nhận đã hoàn tiền thực tế cho khách hàng?')">
+                Xác nhận đã hoàn tiền
+            </button>
+
+        </form>
+
+    </section>
+
+</main>
+
+<script src="/js/live-orders.js"></script>
+
+</body>
+</html>

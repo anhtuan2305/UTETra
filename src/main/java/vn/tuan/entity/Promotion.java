@@ -17,6 +17,9 @@ public class Promotion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+    @ManyToOne private Shop shop;
+    private LocalDateTime expiresAt;
+    private String type = "PRODUCT";
 
     @Column(nullable = false, unique = true, length = 50)
     private String code;

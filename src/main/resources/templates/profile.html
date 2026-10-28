@@ -3,209 +3,484 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Hồ Sơ Cá Nhân - UTETra</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+          rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap"
+          rel="stylesheet">
+
     <style>
         :root {
             --brand-navy: #0b1f3a;
-            --brand-blue: #0d6efd;
+            --brand-blue: #004ea2;
             --brand-red: #c82333;
-            --brand-black: #111827;
-            --brand-gray: #64748b;
         }
+
         body {
             font-family: 'Montserrat', sans-serif;
             background-color: var(--brand-navy);
             background-image: url('/images/wave-bg.png');
             background-repeat: repeat-y;
+            background-position: center top;
             background-size: 100% auto;
             min-height: 100vh;
-            color: var(--brand-black);
+            color: #111827;
+            margin: 0;
         }
+
         .profile-wrapper {
-            background: #ffffff;
+            background: #fff;
             border-radius: 20px;
-            box-shadow: 0 10px 35px rgba(0,0,0,0.35);
+            box-shadow: 0 10px 35px rgba(0, 0, 0, .35);
             padding: 2.5rem;
         }
-        .text-brand-navy { color: var(--brand-navy) !important; }
-        .text-brand-red { color: var(--brand-red) !important; }
+
+        .profile-panel {
+            border: 1px solid #dce3ed;
+            border-radius: 18px;
+            padding: 1.5rem;
+        }
+
+        .profile-info-panel {
+            background: #f8faff;
+        }
+
+        .text-brand-navy {
+            color: var(--brand-navy) !important;
+        }
+
+        .text-brand-red {
+            color: var(--brand-red) !important;
+        }
+
         .btn-brand-navy {
-            background-color: var(--brand-navy);
-            color: #ffffff;
+            background: var(--brand-blue);
+            color: #fff;
             border: none;
-            transition: 0.2s;
         }
+
         .btn-brand-navy:hover {
-            background-color: #172a4d;
-            color: #ffffff;
+            background: #003b7c;
+            color: #fff;
         }
+
         .btn-brand-red {
-            background-color: var(--brand-red);
-            color: #ffffff;
+            background: var(--brand-red);
+            color: #fff;
             border: none;
-            transition: 0.2s;
         }
+
         .btn-brand-red:hover {
-            background-color: #a71d2a;
-            color: #ffffff;
+            background: #a71d2a;
+            color: #fff;
         }
-        .border-brand-navy {
-            border-color: var(--brand-navy) !important;
+
+        .profile-value {
+            overflow-wrap: anywhere;
+        }
+
+        .profile-edit-form {
+            border-top: 1px solid #dce3ed;
+        }
+
+        @media (max-width: 575.98px) {
+            .profile-wrapper {
+                padding: 1.25rem;
+            }
+
+            .profile-panel {
+                padding: 1rem;
+            }
         }
     </style>
 </head>
-<body>
 
-    <div th:replace="~{fragments/header :: header}"></div>
+<body th:attr="data-signed-in=${#authorization.expression('isAuthenticated()') ? 'true' : null}">
 
-    <div class="container my-5">
-        <div class="profile-wrapper">
-            
-            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom flex-wrap gap-2">
-                <div>
-                    <h3 class="fw-bold mb-0 text-brand-navy text-uppercase">
-                        <i class="bi bi-person-circle me-2"></i>Hồ Sơ Tài Khoản
-                    </h3>
-                    <small class="text-muted">Quản lý thông tin cá nhân, sổ địa chỉ và bảo mật mật khẩu</small>
-                </div>
-                <div>
-                    <span class="badge bg-dark px-3 py-2 rounded-pill fs-6">
-                        Vai trò: [[${account.role}]]
-                    </span>
-                </div>
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="container my-5">
+    <div class="profile-wrapper">
+
+        <div class="d-flex justify-content-between align-items-center
+                    mb-4 pb-3 border-bottom flex-wrap gap-3">
+            <div>
+                <h3 class="fw-bold mb-2 text-brand-navy text-uppercase">
+                    <i class="bi bi-person-circle me-2"></i>
+                    Hồ Sơ Tài Khoản
+                </h3>
+                <p class="text-muted small mb-0">
+                    Quản lý thông tin cá nhân, sổ địa chỉ và bảo mật mật khẩu
+                </p>
             </div>
 
-            <!-- Thông báo thành công / lỗi -->
-            <div th:if="${successMessage}" class="alert alert-dark border-0 bg-dark text-white py-2 small rounded-3 mb-4" th:text="${successMessage}"></div>
-            <div th:if="${errorPassword}" class="alert alert-danger py-2 small rounded-3 mb-4" th:text="${errorPassword}"></div>
-            <div th:if="${errorAddress}" class="alert alert-danger py-2 small rounded-3 mb-4" th:text="${errorAddress}"></div>
+            <span class="badge bg-dark px-3 py-2 rounded-pill">
+                Vai trò: [[${account.role}]]
+            </span>
+        </div>
 
-            <div class="row g-4">
-                
-                <!-- Cột trái: Thông tin tài khoản & Sổ địa chỉ -->
-                <div class="col-lg-7">
-                    
-                    <!-- Khối thông tin cá nhân -->
-                    <div class="p-4 border rounded-4 bg-light mb-4">
-                        <h5 class="fw-bold text-brand-navy mb-3">
-                            <i class="bi bi-info-circle me-2"></i>Thông Tin Cơ Bản
+        <!-- Thông báo -->
+        <div th:if="${successMessage != null}"
+             class="alert alert-success"
+             role="status"
+             th:text="${successMessage}"></div>
+
+        <div th:if="${errorProfile != null}"
+             class="alert alert-danger"
+             role="alert"
+             th:text="${errorProfile}"></div>
+
+        <div th:if="${errorPassword != null}"
+             class="alert alert-danger"
+             role="alert"
+             th:text="${errorPassword}"></div>
+
+        <div th:if="${errorAddress != null}"
+             class="alert alert-danger"
+             role="alert"
+             th:text="${errorAddress}"></div>
+
+        <div class="row g-4">
+
+            <!-- Thông tin và địa chỉ -->
+            <div class="col-lg-7">
+
+                <section class="profile-panel profile-info-panel mb-4">
+                    <div class="d-flex justify-content-between align-items-center
+                                flex-wrap gap-2 mb-4">
+                        <h5 class="fw-bold text-brand-navy mb-0">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Thông Tin Cơ Bản
                         </h5>
-                        <div class="row g-3">
-                            <div class="col-sm-6">
-                                <label class="small text-muted fw-bold">Email đăng nhập</label>
-                                <p class="fw-bold text-dark mb-0" th:text="${account.email}">user@example.com</p>
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#editProfile"
+                                aria-controls="editProfile"
+                                th:attr="aria-expanded=${errorProfile != null}">
+                            <i class="bi bi-pencil-square me-1"></i>
+                            Chỉnh sửa
+                        </button>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <div class="small text-muted fw-bold mb-1">
+                                Email đăng nhập
                             </div>
-                            <div class="col-sm-6">
-                                <label class="small text-muted fw-bold">Họ và tên</label>
-                                <p class="fw-bold text-dark mb-0" th:text="${account.fullName != null ? account.fullName : 'Chưa cập nhật'}">Nguyễn Văn A</p>
+                            <p class="profile-value fw-bold mb-0"
+                               th:text="${account.email}"></p>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <div class="small text-muted fw-bold mb-1">
+                                Họ và tên
                             </div>
-                            <div class="col-sm-6">
-                                <label class="small text-muted fw-bold">Số điện thoại</label>
-                                <p class="fw-bold text-dark mb-0" th:text="${account.phone != null ? account.phone : 'Chưa cập nhật'}">0123456789</p>
+                            <p class="profile-value fw-bold mb-0"
+                               th:text="${!#strings.isEmpty(account.fullName)
+                                   ? account.fullName : 'Chưa cập nhật'}"></p>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <div class="small text-muted fw-bold mb-1">
+                                Số điện thoại
                             </div>
-                            <div class="col-sm-6">
-                                <label class="small text-muted fw-bold">Trạng thái tài khoản</label>
-                                <div>
-                                    <span th:if="${account.isActive}" class="badge bg-dark text-white">Đang hoạt động</span>
-                                    <span th:unless="${account.isActive}" class="badge bg-danger">Bị khóa</span>
-                                </div>
+                            <p class="profile-value fw-bold mb-0"
+                               th:text="${!#strings.isEmpty(account.phone)
+                                   ? account.phone : 'Chưa cập nhật'}"></p>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <div class="small text-muted fw-bold mb-1">
+                                Trạng thái tài khoản
                             </div>
+                            <span th:if="${account.isActive}"
+                                  class="badge bg-success">
+                                Đang hoạt động
+                            </span>
+                            <span th:unless="${account.isActive}"
+                                  class="badge bg-danger">
+                                Bị khóa
+                            </span>
                         </div>
                     </div>
 
-                    <!-- Khối sổ địa chỉ nhận hàng -->
-                    <div class="p-4 border rounded-4 bg-white">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="fw-bold text-brand-navy mb-0">
-                                <i class="bi bi-geo-alt me-2"></i>Sổ Địa Chỉ Giao Hàng
-                            </h5>
-                            <button class="btn btn-sm btn-outline-dark rounded-pill px-3" data-bs-toggle="collapse" data-bs-target="#collapseAddAddress">
-                                <i class="bi bi-plus-lg me-1"></i> Thêm Địa Chỉ
-                            </button>
-                        </div>
+                    <!-- Form chỉnh sửa nằm trong khung thông tin -->
+                    <div class="collapse"
+                         id="editProfile"
+                         th:classappend="${errorProfile != null ? 'show' : ''}">
 
-                        <!-- Form thêm địa chỉ mới ẩn/hiện -->
-                        <div class="collapse mb-4" id="collapseAddAddress">
-                            <form th:action="@{/profile/address/add}" th:object="${newAddress}" method="post" class="p-3 border rounded-3 bg-light">
-                                <h6 class="fw-bold text-brand-navy mb-3">Thêm Địa Chỉ Nhận Mới</h6>
-                                <div class="row g-2 mb-2">
-                                    <div class="col-sm-6">
-                                        <input type="text" th:field="*{receiverName}" class="form-control form-control-sm" placeholder="Tên người nhận *" required>
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <input type="text" th:field="*{phone}" class="form-control form-control-sm" placeholder="Số điện thoại *" required>
-                                    </div>
-                                    <div class="col-12">
-                                        <input type="text" th:field="*{streetAddress}" class="form-control form-control-sm" placeholder="Số nhà, tên đường *" required>
-                                    </div>
-                                    <div class="col-12">
-                                        <input type="text" th:field="*{city}" class="form-control form-control-sm" placeholder="Tỉnh / Thành phố *" required>
-                                    </div>
-                                </div>
-                                <button type="submit" class="btn btn-sm btn-brand-navy rounded-pill px-4 fw-bold">Lưu Địa Chỉ</button>
-                            </form>
-                        </div>
+                        <form th:action="@{/profile/info}"
+                              method="post"
+                              class="profile-edit-form mt-4 pt-4">
 
-                        <!-- Danh sách địa chỉ đã lưu -->
-                        <div th:if="${#lists.isEmpty(addresses)}" class="text-center text-muted py-3 small">
-                            Bạn chưa có địa chỉ nhận hàng nào.
-                        </div>
-                        <div th:each="addr : ${addresses}" class="p-3 border rounded-3 mb-2 d-flex justify-content-between align-items-center">
-                            <div>
-                                <div class="fw-bold text-dark">
-                                    [[${addr.receiverName}]] <span class="text-muted fw-normal">([[${addr.phone}]])</span>
-                                </div>
-                                <div class="small text-muted">[[${addr.streetAddress}]], [[${addr.city}]]</div>
+                            <h6 class="fw-bold text-brand-navy mb-3">
+                                Cập nhật thông tin cá nhân
+                            </h6>
+
+                            <div class="mb-3">
+                                <label for="profileFullName"
+                                       class="form-label small fw-bold">
+                                    Họ và tên
+                                </label>
+                                <input type="text"
+                                       id="profileFullName"
+                                       name="fullName"
+                                       class="form-control"
+                                       th:value="${profileFullName != null
+                                           ? profileFullName : account.fullName}"
+                                       maxlength="100"
+                                       autocomplete="name"
+                                       placeholder="Nhập họ và tên"
+                                       required>
                             </div>
-                            <form th:action="@{/profile/address/delete}" method="post" class="d-inline">
-                                <input type="hidden" name="addressId" th:value="${addr.id}">
-                                <button type="submit" class="btn btn-sm btn-outline-danger border-0" onclick="return confirm('Bạn có chắc muốn xóa địa chỉ này?');">
-                                    <i class="bi bi-trash3"></i>
+
+                            <div class="mb-3">
+                                <label for="profilePhone"
+                                       class="form-label small fw-bold">
+                                    Số điện thoại
+                                </label>
+                                <input type="tel"
+                                       id="profilePhone"
+                                       name="phone"
+                                       class="form-control"
+                                       th:value="${profilePhone != null
+                                           ? profilePhone : account.phone}"
+                                       pattern="0[0-9]{9}"
+                                       maxlength="10"
+                                       inputmode="numeric"
+                                       autocomplete="tel"
+                                       title="Nhập 10 chữ số, bắt đầu bằng 0"
+                                       placeholder="Ví dụ: 0912345678"
+                                       required>
+                            </div>
+
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="submit"
+                                        class="btn btn-brand-navy rounded-pill px-4 fw-bold">
+                                    <i class="bi bi-check2-circle me-1"></i>
+                                    Lưu thông tin
                                 </button>
-                            </form>
-                        </div>
 
+                                <button type="button"
+                                        class="btn btn-outline-secondary rounded-pill px-4"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#editProfile">
+                                    Đóng
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- Sổ địa chỉ -->
+                <section class="profile-panel">
+                    <div class="d-flex justify-content-between align-items-center
+                                flex-wrap gap-3 mb-3">
+                        <h5 class="fw-bold text-brand-navy mb-0">
+                            <i class="bi bi-geo-alt me-2"></i>
+                            Sổ Địa Chỉ Giao Hàng
+                        </h5>
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#collapseAddAddress"
+                                aria-controls="collapseAddAddress"
+                                th:attr="aria-expanded=${errorAddress != null}">
+                            <i class="bi bi-plus-lg me-1"></i>
+                            Thêm địa chỉ
+                        </button>
                     </div>
 
-                </div>
+                    <div class="collapse mb-4"
+                         id="collapseAddAddress"
+                         th:classappend="${errorAddress != null ? 'show' : ''}">
 
-                <!-- Cột phải: Đổi mật khẩu -->
-                <div class="col-lg-5">
-                    <div class="p-4 border rounded-4 bg-white h-100">
-                        <h5 class="fw-bold text-brand-red mb-3">
-                            <i class="bi bi-shield-lock me-2"></i>Đổi Mật Khẩu
-                        </h5>
-                        <p class="small text-muted mb-4">Để bảo mật tài khoản, vui lòng không chia sẻ mật khẩu cho người khác.</p>
+                        <form th:action="@{/profile/address/add}"
+                              th:object="${newAddress}"
+                              method="post"
+                              class="p-3 border rounded-3 bg-light">
 
-                        <form th:action="@{/profile/change-password}" th:object="${changePasswordDTO}" method="post">
-                            <div class="mb-3">
-                                <label class="form-label small fw-bold">Mật khẩu hiện tại</label>
-                                <input type="password" th:field="*{currentPassword}" class="form-control rounded-3" placeholder="Nhập mật khẩu cũ..." required>
+                            <h6 class="fw-bold text-brand-navy mb-3">
+                                Thêm Địa Chỉ Nhận Mới
+                            </h6>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-sm-6">
+                                    <label for="receiverName"
+                                           class="form-label small fw-semibold">
+                                        Người nhận
+                                    </label>
+                                    <input type="text"
+                                           th:field="*{receiverName}"
+                                           class="form-control form-control-sm"
+                                           placeholder="Tên người nhận"
+                                           required>
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <label for="phone"
+                                           class="form-label small fw-semibold">
+                                        Số điện thoại
+                                    </label>
+                                    <input type="tel"
+                                           th:field="*{phone}"
+                                           class="form-control form-control-sm"
+                                           pattern="0[0-9]{9}"
+                                           maxlength="10"
+                                           inputmode="numeric"
+                                           title="Nhập 10 chữ số, bắt đầu bằng 0"
+                                           placeholder="Số điện thoại"
+                                           required>
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="streetAddress"
+                                           class="form-label small fw-semibold">
+                                        Địa chỉ
+                                    </label>
+                                    <input type="text"
+                                           th:field="*{streetAddress}"
+                                           class="form-control form-control-sm"
+                                           placeholder="Số nhà, tên đường"
+                                           required>
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="city"
+                                           class="form-label small fw-semibold">
+                                        Tỉnh / Thành phố
+                                    </label>
+                                    <input type="text"
+                                           th:field="*{city}"
+                                           class="form-control form-control-sm"
+                                           placeholder="Tỉnh / Thành phố"
+                                           required>
+                                </div>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-bold">Mật khẩu mới</label>
-                                <input type="password" th:field="*{newPassword}" class="form-control rounded-3" placeholder="Nhập mật khẩu mới..." required>
-                            </div>
-                            <div class="mb-4">
-                                <label class="form-label small fw-bold">Xác nhận mật khẩu mới</label>
-                                <input type="password" th:field="*{confirmPassword}" class="form-control rounded-3" placeholder="Nhập lại mật khẩu mới..." required>
-                            </div>
-                            <button type="submit" class="btn btn-brand-red w-100 py-2 rounded-pill fw-bold">
-                                Cập Nhật Mật Khẩu
+
+                            <button type="submit"
+                                    class="btn btn-sm btn-brand-navy rounded-pill px-4 fw-bold">
+                                Lưu địa chỉ
                             </button>
                         </form>
                     </div>
-                </div>
 
+                    <div th:if="${#lists.isEmpty(addresses)}"
+                         class="text-center text-muted py-4 small">
+                        <i class="bi bi-geo-alt fs-3 d-block mb-2"></i>
+                        Bạn chưa có địa chỉ nhận hàng nào.
+                    </div>
+
+                    <div th:each="addr : ${addresses}"
+                         class="p-3 border rounded-3 mb-2
+                                d-flex justify-content-between align-items-center gap-3">
+                        <div class="profile-value">
+                            <div class="fw-bold">
+                                <span th:text="${addr.receiverName}"></span>
+                                <span class="text-muted fw-normal"
+                                      th:text="${'(' + addr.phone + ')'}"></span>
+                            </div>
+                            <div class="small text-muted mt-1">
+                                [[${addr.streetAddress}]], [[${addr.city}]]
+                            </div>
+                        </div>
+
+                        <form th:action="@{/profile/address/delete}"
+                              method="post"
+                              class="m-0"
+                              onsubmit="return confirm('Bạn có chắc muốn xóa địa chỉ này?');">
+                            <input type="hidden"
+                                   name="addressId"
+                                   th:value="${addr.id}">
+                            <button type="submit"
+                                    class="btn btn-sm btn-outline-danger"
+                                    title="Xóa địa chỉ"
+                                    aria-label="Xóa địa chỉ">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </form>
+                    </div>
+                </section>
             </div>
 
+            <!-- Đổi mật khẩu -->
+            <div class="col-lg-5">
+                <section class="profile-panel">
+                    <h5 class="fw-bold text-brand-red mb-3">
+                        <i class="bi bi-shield-lock me-2"></i>
+                        Đổi Mật Khẩu
+                    </h5>
+
+                    <p class="small text-muted mb-4">
+                        Để bảo mật tài khoản, vui lòng không chia sẻ mật khẩu
+                        cho người khác.
+                    </p>
+
+                    <form th:action="@{/profile/change-password}"
+                          th:object="${changePasswordDTO}"
+                          method="post">
+
+                        <div class="mb-3">
+                            <label for="currentPassword"
+                                   class="form-label small fw-bold">
+                                Mật khẩu hiện tại
+                            </label>
+                            <input type="password"
+                                   th:field="*{currentPassword}"
+                                   class="form-control rounded-3"
+                                   autocomplete="current-password"
+                                   placeholder="Nhập mật khẩu cũ..."
+                                   required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="newPassword"
+                                   class="form-label small fw-bold">
+                                Mật khẩu mới
+                            </label>
+                            <input type="password"
+                                   th:field="*{newPassword}"
+                                   class="form-control rounded-3"
+                                   autocomplete="new-password"
+                                   placeholder="Nhập mật khẩu mới..."
+                                   required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="confirmPassword"
+                                   class="form-label small fw-bold">
+                                Xác nhận mật khẩu mới
+                            </label>
+                            <input type="password"
+                                   th:field="*{confirmPassword}"
+                                   class="form-control rounded-3"
+                                   autocomplete="new-password"
+                                   placeholder="Nhập lại mật khẩu mới..."
+                                   required>
+                        </div>
+
+                        <button type="submit"
+                                class="btn btn-brand-red w-100 py-2 rounded-pill fw-bold">
+                            Cập nhật mật khẩu
+                        </button>
+                    </form>
+                </section>
+            </div>
         </div>
     </div>
+</main>
 
-    <div th:replace="~{fragments/footer :: footer}"></div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/live-orders.js"></script>
+
 </body>
 </html>

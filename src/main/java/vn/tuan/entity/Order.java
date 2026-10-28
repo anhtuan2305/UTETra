@@ -19,6 +19,15 @@ public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+    @Version private Long version;
+    private LocalDateTime completedAt;
+    private LocalDateTime refundedAt;
+    @Column(length=500) private String returnReason;
+    @Builder.Default private Boolean vendorArchived = false;
+    private BigDecimal commissionAmount;
+    @Column(length=60) private String paymentReference;
+    private String gatewayTransactionId;
+    private LocalDateTime paymentExpiresAt;
 
     // Cho phép null khi khách không đăng nhập
     @ManyToOne(fetch = FetchType.LAZY)
